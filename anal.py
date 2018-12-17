@@ -3,6 +3,7 @@
 import os, csv
 from datetime import datetime, time
 from pytz import timezone
+from pprint import pprint
 input_dir = '/home/nate/dissdata/routing/sched/'
 localTime = timezone('America/Toronto')
 
@@ -48,12 +49,12 @@ class OD(object):
 				self.trips.append( Trip(r['depart'],r['arrive'],r['itinerary']) )
 		self.remove_suboptimal_trips()
 		self.remove_trips_outside_window()
-		print(self.shares())
+		pprint(self.shares(),width=1)
 
 	def remove_trips_outside_window(self):
 		"""clip to trips inside a defined daytime window"""
-		start = time(6,0,0) # h,m,s; 6am
-		end = time(22,0,0) # h,m,s;  10pm
+		start = time(6,30,0) # h,m,s; 6:30am
+		end = time(22,0,0) # h,m,s;  10:00pm
 		to_remove = []
 		for i, trip in enumerate(self.trips):
 			if trip.depart.time() > end or trip.arrive.time() < start:
