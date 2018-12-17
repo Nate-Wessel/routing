@@ -1,14 +1,16 @@
 # tentative analysis script for routing paper
 
 import os, csv
-from datetime import datetime
+from datetime import datetime, time
+from pytz import timezone
 input_dir = '/home/nate/dissdata/routing/sched/'
+localTime = timezone('America/Toronto')
 
 class Trip(object):
 	"""one shortest trip"""
 	def __init__(self,depart,arrive,itin):
-		self.depart = datetime.utcfromtimestamp(float(depart))
-		self.arrive = datetime.utcfromtimestamp(float(arrive))
+		self.depart = localTime.localize( datetime.fromtimestamp(float(depart)) )
+		self.arrive = localTime.localize( datetime.fromtimestamp(float(arrive)) )
 		self.itinerary = itin # string from otp script
 		
 	def __repr__(self):
@@ -45,7 +47,20 @@ class OD(object):
 			for r in reader:
 				self.trips.append( Trip(r['depart'],r['arrive'],r['itinerary']) )
 		self.remove_suboptimal_trips()
+		self.remove_trips_outside_window()
 		print(self.shares())
+
+	def remove_trips_outside_window(self):
+		"""clip to trips inside a defined daytime window"""
+		start = time(6,0,0) # h,m,s; 6am
+		end = time(22,0,0) # h,m,s;  10pm
+		to_remove = []
+		for i, trip in enumerate(self.trips):
+			if trip.depart.time() > end or trip.arrive.time() < start:
+				to_remove.append(i)
+		for i in reversed(to_remove):
+			del self.trips[i]
+		print('\t',len(to_remove),'trips removed from window')
 
 	def remove_suboptimal_trips(self):
 		"""If a trip departs earlier but gets in later than another trip it is 
