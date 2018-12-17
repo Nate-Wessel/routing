@@ -18,7 +18,16 @@ class Trip(object):
 	def routes(self):
 		"""return an ordered list of routes only, e.g. ['47','506']"""
 		segs = self.itinerary.split(',')
-		return [ s[1:] for s in segs if s[0] == 'r' ]
+		routes = [ s[1:] for s in segs if s[0] == 'r' ]
+		# now check for a route following itself
+		if len(routes) <= 1 or len(routes) == len(set(routes)):
+			return routes
+		else: # else cleaning is necessary
+			cleaned_routes = [routes[0]]
+			for i, route in enumerate(routes):
+				if i > 0 and route != routes[i-1]:
+					cleaned_routes.append(route)
+			return cleaned_routes
 
 	@property
 	def duration(self):
@@ -35,10 +44,10 @@ class OD(object):
 			reader = csv.DictReader(f)
 			for r in reader:
 				self.trips.append( Trip(r['depart'],r['arrive'],r['itinerary']) )
-		self.check_for_suboptimal_trips()
-		print(self.portions())
+		self.remove_suboptimal_trips()
+		print(self.shares())
 
-	def check_for_suboptimal_trips(self):
+	def remove_suboptimal_trips(self):
 		"""If a trip departs earlier but gets in later than another trip it is 
 		suboptimal and needs to be removed"""
 		bad_trips = []
@@ -48,22 +57,26 @@ class OD(object):
 					bad_trips.append(i)
 		for i in reversed(bad_trips):
 			self.trips.pop(i)
-		print(len(bad_trips),'suboptimal trips removed')
+		print('\t',len(bad_trips),'suboptimal trips removed')
 		
-	def portions(self):
-		"""distribution of trips"""
+	def shares(self):
+		"""proportions of fastest trip itineraries"""
 		itins = {}
+		total_time = 0
 		for i, trip in enumerate(self.trips):
 			routes = ';'.join(trip.routes)
 			if i == 0:
 				from_prev = 0 
 			else:
 				from_prev = (trip.depart - self.trips[i-1].depart).total_seconds()
+			total_time += from_prev
 			if routes not in itins:
 				itins[routes] = { 'count':1, 'time':from_prev }
 			else:
 				itins[routes]['count'] += 1
 				itins[routes]['time'] += from_prev
+		for key in itins:
+			itins[key]['time'] = itins[key]['time'] / total_time
 		return itins
 
 
@@ -73,7 +86,8 @@ for o in os.listdir(input_dir):
 		csv_path = input_dir+o+'/'+filename
 		d = filename[:-4]
 		# only look at home and work for now
-		if o not in ('12','316') or d not in ('12','316'):
+		selected = ('12','316','453')
+		if o not in selected or d not in selected:
 			continue
 		print(o+'->'+d)
 		# parse the file
