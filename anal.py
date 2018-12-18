@@ -4,7 +4,7 @@ import os, csv
 from datetime import datetime, time
 from pytz import timezone
 from pprint import pprint
-input_dir = '/home/nate/dissdata/routing/sched/'
+input_dir = '/home/nate/dissdata/routing/'
 localTime = timezone('America/Toronto')
 
 class Trip(object):
@@ -40,40 +40,65 @@ class Trip(object):
 
 class OD(object):
 	"""An O->D pair"""
-	def __init__(self,filepath):
-		self.path = filepath # absolute path to CSV file
-		self.trips = []
-		with open(self.path, newline='') as f:
-			reader = csv.DictReader(f)
-			for r in reader:
-				self.trips.append( Trip(r['depart'],r['arrive'],r['itinerary']) )
+	def __init__(self,origin,dest):
+		"""origin and dest are dictionaries of the values from the ODs.csv file"""
+		self.orig = origin
+		self.dest = dest
+		self.sched_trips, self.retro_trips = self.get_all_trips()
 		self.remove_suboptimal_trips()
 		self.remove_trips_outside_window()
-		pprint(self.shares(),width=1)
+		print( len(self.sched_trips),len(self.retro_trips) )
+#		pprint(self.shares(),width=2)
+
+
+	def get_all_trips(self):
+		"""check all possible files for trips data"""
+		sched_trips = []
+		retro_trips = []
+		# directories to check
+		directories = ['sched','17476','17477','17478','17479','17480']
+		for d in directories:
+			fpath = input_dir+d+'/'+self.orig['uid']+'/'+self.dest['uid']+'.csv'
+			if os.path.exists(fpath):
+				if d == 'sched':
+					sched_trips.extend( self.get_trips(fpath) )
+				else:
+					retro_trips.extend( self.get_trips(fpath) )
+		return sched_trips, retro_trips
+
+	def get_trips(self,csvpath):
+		"""return a list of parsed trips from this CSV file"""
+		with open(csvpath) as f:
+			reader = csv.DictReader(f)
+			return [ Trip(r['depart'],r['arrive'],r['itinerary']) for r in reader ]
+
 
 	def remove_trips_outside_window(self):
 		"""clip to trips inside a defined daytime window"""
 		start = time(6,30,0) # h,m,s; 6:30am
 		end = time(22,0,0) # h,m,s;  10:00pm
-		to_remove = []
-		for i, trip in enumerate(self.trips):
-			if trip.depart.time() > end or trip.arrive.time() < start:
-				to_remove.append(i)
-		for i in reversed(to_remove):
-			del self.trips[i]
-		print('\t',len(to_remove),'trips removed from window')
+		for trips in [self.sched_trips,self.retro_trips]:
+			to_remove = []
+			for i, trip in enumerate(trips):
+				if trip.depart.time() > end or trip.arrive.time() < start:
+					to_remove.append(i)
+			for i in reversed(to_remove):
+				del trips[i]
+			print('\t',len(to_remove),'trips removed from window')
 
 	def remove_suboptimal_trips(self):
 		"""If a trip departs earlier but gets in later than another trip it is 
-		suboptimal and needs to be removed"""
-		bad_trips = []
-		for i, t1 in enumerate(self.trips):
-			for t2 in self.trips:
-				if t1.depart < t2.depart and t1.arrive > t2.arrive:
-					bad_trips.append(i)
-		for i in reversed(bad_trips):
-			self.trips.pop(i)
-		print('\t',len(bad_trips),'suboptimal trips removed')
+		suboptimal and needs to be removed. Do this for both scheduled and 
+		retrospective trips."""
+		for trips in [self.sched_trips,self.retro_trips]:
+			bad_trips = []
+			for i, t1 in enumerate(trips):
+				for t2 in trips:
+					if t1.depart < t2.depart and t1.arrive > t2.arrive:
+						bad_trips.append(i)
+			for i in reversed(bad_trips):
+				trips.pop(i)
+			print('\t',len(bad_trips),'suboptimal trips removed')
 		
 	def shares(self):
 		"""proportions of fastest trip itineraries"""
@@ -96,16 +121,15 @@ class OD(object):
 		return itins
 
 
-# loop over available o->d csv files
-for o in os.listdir(input_dir):
-	for filename in os.listdir(input_dir+o):
-		csv_path = input_dir+o+'/'+filename
-		d = filename[:-4]
-		# only look at home and work for now
-		selected = ('12','316','453')
-		if o not in selected or d not in selected:
-			continue
-		print(o+'->'+d)
-		# parse the file
-		OD(csv_path)
+# get a list of ODs from file
+with open('personal-ODs.csv') as f:
+	reader = csv.DictReader(f)
+	locations = [ dict(r) for r in reader ]
+
+# loop over OD combinations
+ODs = []
+for o in locations:
+	for d in locations:
+		if o['uid'] == d['uid']: continue
+		ODs.append( OD(o,d) )
 
