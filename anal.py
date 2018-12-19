@@ -4,6 +4,7 @@ import os, csv
 from datetime import datetime, time
 from pytz import timezone
 from pprint import pprint
+from math import log
 input_dir = '/home/nate/dissdata/routing/'
 localTime = timezone('America/Toronto')
 
@@ -44,12 +45,26 @@ class OD(object):
 		"""origin and dest are dictionaries of the values from the ODs.csv file"""
 		self.orig = origin
 		self.dest = dest
+		# read in the trip itineraries
 		self.sched_trips, self.retro_trips = self.get_all_trips()
+		# clean out irrelevant trips
 		self.remove_suboptimal_trips()
 		self.remove_trips_outside_window()
-		print( len(self.sched_trips),len(self.retro_trips) )
-#		pprint(self.shares(),width=2)
+		# print summary info
+		print(self.orig['nomen'],'->',self.dest['nomen'])
+		pprint(self.shares(self.sched_trips))
+		pprint(self.shares(self.retro_trips))
+		print('\tentropy of sched',self.entropy(self.sched_trips))
+		print('\tentropy of retro',self.entropy(self.retro_trips))
 
+	def entropy(self,trips):
+		"""shannon entropy of the itinerary probability distribution"""
+		itins = self.shares(trips)
+		entropy = 0
+		for itin in itins:
+			probability = itins[itin]['time']
+			entropy += probability * log(probability,2)
+		return - entropy
 
 	def get_all_trips(self):
 		"""check all possible files for trips data"""
@@ -100,16 +115,16 @@ class OD(object):
 				trips.pop(i)
 			print('\t',len(bad_trips),'suboptimal trips removed')
 		
-	def shares(self):
+	def shares(self,trips):
 		"""proportions of fastest trip itineraries"""
 		itins = {}
 		total_time = 0
-		for i, trip in enumerate(self.trips):
+		for i, trip in enumerate(trips):
 			routes = ';'.join(trip.routes)
 			if i == 0:
-				from_prev = 0 
+				from_prev = 60 # deault to 60 seconds to prevent p == 0
 			else:
-				from_prev = (trip.depart - self.trips[i-1].depart).total_seconds()
+				from_prev = (trip.depart - trips[i-1].depart).total_seconds()
 			total_time += from_prev
 			if routes not in itins:
 				itins[routes] = { 'count':1, 'time':from_prev }
