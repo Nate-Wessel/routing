@@ -1,7 +1,8 @@
 # tentative analysis script for routing paper
 
 import os, csv
-from datetime import datetime, time
+from datetime import datetime as dt
+from datetime import time
 from pytz import timezone
 from pprint import pprint
 from math import log
@@ -11,12 +12,22 @@ localTime = timezone('America/Toronto')
 class Trip(object):
 	"""one shortest trip"""
 	def __init__(self,depart,arrive,itin):
-		self.depart = localTime.localize( datetime.fromtimestamp(float(depart)) )
-		self.arrive = localTime.localize( datetime.fromtimestamp(float(arrive)) )
+		# times in unix epoch
+		self.depart = float(depart)
+		self.arrive = float(arrive)
+		#self.depart = localTime.localize( dt.fromtimestamp(self.) )
+		#self.arrive = localTime.localize( dt.fromtimestamp(float(arrive)) )
 		self.itinerary = itin # string from otp script
 		
 	def __repr__(self):
-		return str(self.depart.time())
+		local_datetime = localTime.localize( 
+			dt.fromtimestamp(
+				self.depart ) )
+		return str( local_datetime.time() )
+
+	def __cmp__(self,other):
+		"""sort by departure time"""
+		return int( other.depart - self.depart )
 
 	@property
 	def routes(self):
@@ -36,7 +47,7 @@ class Trip(object):
 	@property
 	def duration(self):
 		"""length of trip in minutes"""
-		return (self.arrive-self.depart).total_seconds() / 60.0
+		return ( self.arrive - self.depart ) / 60.0
 
 
 class OD(object):
@@ -48,8 +59,8 @@ class OD(object):
 		# read in the trip itineraries
 		self.sched_trips, self.retro_trips = self.get_all_trips()
 		# clean out irrelevant trips
-		self.remove_suboptimal_trips()
 		self.remove_trips_outside_window()
+		self.remove_suboptimal_trips()
 		# print summary info
 		print(self.orig['nomen'],'->',self.dest['nomen'])
 		pprint(self.shares(self.sched_trips))
@@ -87,7 +98,6 @@ class OD(object):
 			reader = csv.DictReader(f)
 			return [ Trip(r['depart'],r['arrive'],r['itinerary']) for r in reader ]
 
-
 	def remove_trips_outside_window(self):
 		"""clip to trips inside a defined daytime window"""
 		start = time(6,30,0) # h,m,s; 6:30am
@@ -95,7 +105,9 @@ class OD(object):
 		for trips in [self.sched_trips,self.retro_trips]:
 			to_remove = []
 			for i, trip in enumerate(trips):
-				if trip.depart.time() > end or trip.arrive.time() < start:
+				arrival = localTime.localize(dt.fromtimestamp(trip.arrive)).time()
+				departure = localTime.localize(dt.fromtimestamp(trip.depart)).time()
+				if departure > end or arrival < start:
 					to_remove.append(i)
 			for i in reversed(to_remove):
 				del trips[i]
@@ -124,7 +136,7 @@ class OD(object):
 			if i == 0:
 				from_prev = 60 # deault to 60 seconds to prevent p == 0
 			else:
-				from_prev = (trip.depart - trips[i-1].depart).total_seconds()
+				from_prev = ( trip.depart - trips[i-1].depart )
 			total_time += from_prev
 			if routes not in itins:
 				itins[routes] = { 'count':1, 'time':from_prev }
