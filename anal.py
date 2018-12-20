@@ -26,8 +26,8 @@ class Trip(object):
 		return str( local_datetime.time() )
 
 	def __cmp__(self,other):
-		"""sort by departure time"""
-		return int( other.depart - self.depart )
+		"""sort by arrival time"""
+		return int( other.arrive - self.arrive )
 
 	@property
 	def routes(self):
@@ -118,11 +118,14 @@ class OD(object):
 		suboptimal and needs to be removed. Do this for both scheduled and 
 		retrospective trips."""
 		for trips in [self.sched_trips,self.retro_trips]:
+			trips.sort(key = lambda x: x.arrive)
+			#trips.sort() # by arrival
 			bad_trips = []
-			for i, t1 in enumerate(trips):
-				for t2 in trips:
-					if t1.depart < t2.depart and t1.arrive > t2.arrive:
-						bad_trips.append(i)
+			for i, trip in enumerate(trips):
+				# first one is good by definition
+				if i == 0: continue
+				if trip.depart < trips[i-1].depart:
+					bad_trips.append(i)
 			for i in reversed(bad_trips):
 				trips.pop(i)
 			print('\t',len(bad_trips),'suboptimal trips removed')
