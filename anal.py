@@ -15,8 +15,6 @@ class Trip(object):
 		# times in unix epoch
 		self.depart = float(depart)
 		self.arrive = float(arrive)
-		#self.depart = localTime.localize( dt.fromtimestamp(self.) )
-		#self.arrive = localTime.localize( dt.fromtimestamp(float(arrive)) )
 		self.itinerary = itin # string from otp script
 		
 	def __repr__(self):
@@ -24,10 +22,6 @@ class Trip(object):
 			dt.fromtimestamp(
 				self.depart ) )
 		return str( local_datetime.time() )
-
-	def __cmp__(self,other):
-		"""sort by arrival time"""
-		return int( other.arrive - self.arrive )
 
 	@property
 	def routes(self):
@@ -57,46 +51,50 @@ class OD(object):
 		self.orig = origin
 		self.dest = dest
 		# read in the trip itineraries
-		self.sched_trips, self.retro_trips = self.get_all_trips()
-		# clean out irrelevant trips
+		self.sched_trips = self.get_all_trips('sched')
+		self.retro_trips = self.get_all_trips('retro')
+		# clean out irrelevant trips for both datasets
 		self.remove_trips_outside_window()
 		self.remove_suboptimal_trips()
-		# print summary info
-		print(self.orig['nomen'],'->',self.dest['nomen'])
-		pprint(self.shares(self.sched_trips))
-		pprint(self.shares(self.retro_trips))
-		print('\tentropy of sched',self.entropy(self.sched_trips))
-		print('\tentropy of retro',self.entropy(self.retro_trips))
+		# summarize itinerary data
+		self.sched_itins = self.summarize_itineraries(self.sched_trips)
+		self.retro_itins = self.summarize_itineraries(self.retro_trips)
+		# print summary info, including entropy
+		print(self)
 
-	def entropy(self,trips):
+	def __repr__(self):
+		name = self.orig['nomen']+' -> '+self.dest['nomen']
+		entropy =  '\n\tentropy-s:{},r:{}'.format(
+			round(self.entropy(self.sched_itins),2),
+			round(self.entropy(self.retro_itins),2)
+		)
+		return( name+' '+entropy )
+
+	def entropy(self,itineraries):
 		"""shannon entropy of the itinerary probability distribution"""
-		itins = self.shares(trips)
 		entropy = 0
-		for itin in itins:
-			probability = itins[itin]['time']
+		for itin in itineraries:
+			probability = itineraries[itin]['time']
 			entropy += probability * log(probability,2)
 		return - entropy
 
-	def get_all_trips(self):
-		"""check all possible files for trips data"""
-		sched_trips = []
-		retro_trips = []
+	def get_all_trips(self,dataset):
+		"""Check files for trips data and read it into a list."""
 		# directories to check
-		directories = ['sched','17476','17477','17478','17479','17480']
+		if dataset == 'sched': 
+			directories = ['sched'] 
+		elif dataset == 'retro': 
+			directories = ['17476','17477','17478','17479','17480']
+		trips = []
 		for d in directories:
-			fpath = input_dir+d+'/'+self.orig['uid']+'/'+self.dest['uid']+'.csv'
-			if os.path.exists(fpath):
-				if d == 'sched':
-					sched_trips.extend( self.get_trips(fpath) )
-				else:
-					retro_trips.extend( self.get_trips(fpath) )
-		return sched_trips, retro_trips
-
-	def get_trips(self,csvpath):
-		"""return a list of parsed trips from this CSV file"""
-		with open(csvpath) as f:
-			reader = csv.DictReader(f)
-			return [ Trip(r['depart'],r['arrive'],r['itinerary']) for r in reader ]
+			csvpath = input_dir+d+'/'+self.orig['uid']+'/'+self.dest['uid']+'.csv'
+			if not os.path.exists(csvpath): continue			
+			with open(csvpath) as f:
+				reader = csv.DictReader(f)	
+				trips.extend( 
+					[ Trip(r['depart'],r['arrive'],r['itinerary']) for r in reader ]
+				)
+		return trips
 
 	def remove_trips_outside_window(self):
 		"""clip to trips inside a defined daytime window"""
@@ -111,9 +109,10 @@ class OD(object):
 					to_remove.append(i)
 			for i in reversed(to_remove):
 				del trips[i]
-			print('\t',len(to_remove),'trips removed from window')
+			#print('\t',len(to_remove),'trips removed from window')
 
 	def remove_suboptimal_trips(self):
+		# TODO make sure this actually does what it is supposed to
 		"""If a trip departs earlier but gets in later than another trip it is 
 		suboptimal and needs to be removed. Do this for both scheduled and 
 		retrospective trips."""
@@ -128,16 +127,16 @@ class OD(object):
 					bad_trips.append(i)
 			for i in reversed(bad_trips):
 				trips.pop(i)
-			print('\t',len(bad_trips),'suboptimal trips removed')
+			#print('\t',len(bad_trips),'suboptimal trips removed')
 		
-	def shares(self,trips):
+	def summarize_itineraries(self,trips):
 		"""proportions of fastest trip itineraries"""
 		itins = {}
 		total_time = 0
 		for i, trip in enumerate(trips):
 			routes = ';'.join(trip.routes)
 			if i == 0:
-				from_prev = 60 # deault to 60 seconds to prevent p == 0
+				from_prev = 60 # default to 60 seconds to prevent p == 0
 			else:
 				from_prev = ( trip.depart - trips[i-1].depart )
 			total_time += from_prev
