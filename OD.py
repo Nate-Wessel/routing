@@ -27,18 +27,27 @@ class OD(object):
 
 	def __repr__(self):
 		name = self.orig['nomen']+' -> '+self.dest['nomen']
-		entropy =  '\n\tentropy-s:{},r:{}'.format(
+		entropy = '\n\tentropy-s:{},r:{}'.format(
 			round(self.entropy(self.sched_itins),2),
 			round(self.entropy(self.retro_itins),2)
 		)
-		return( name+' '+entropy )
+		sched = '\n\tsched | En:{e} Pr:{p}, It:{i}'.format(
+			i=self.sched_itins[0]['itin'], 
+			p=round(self.sched_itins[0]['prob'],3),
+			e=round(self.entropy(self.sched_itins),2)
+		)
+		retro = '\n\tretro | En:{e} Pr:{p}, It:{i}'.format(
+			i=self.retro_itins[0]['itin'], 
+			p=round(self.retro_itins[0]['prob'],3),
+			e=round(self.entropy(self.retro_itins),2)
+		)
+		return( name + sched + retro )
 
 	def entropy(self,itineraries):
 		"""shannon entropy of the itinerary probability distribution"""
 		entropy = 0
 		for itin in itineraries:
-			probability = itineraries[itin]['time']
-			entropy += probability * log(probability,2)
+			entropy += itin['prob'] * log(itin['prob'],2)
 		return - entropy
 
 	def get_all_trips(self,dataset):
@@ -94,14 +103,39 @@ class OD(object):
 		
 	def summarize_itineraries(self,trips):
 		"""proportions of fastest trip itineraries"""
-		itins = {}
-		total_time = 0
+		# get distinct itineraries
+		itins = set([trip.itin_uid for trip in trips])
+		# put this in a dict with initial counts
+		itins = { key:{'itin':key,'time':0,'count':0} for key in itins }
+		# add times from trips to each 
 		for i, trip in enumerate(trips):
-			routes = ';'.join(trip.routes)
-			if i == 0:
-				from_prev = 60 # default to 60 seconds to prevent p == 0
+			if i == 0: 
+				from_prev = 60
 			else:
-				from_prev = ( trip.depart - trips[i-1].depart )
+				from_prev = trip.depart - trips[i-1].depart
+			itins[trip.itin_uid]['time'] += from_prev
+			itins[trip.itin_uid]['count'] += 1
+		# change format from dict to list of dicts
+		itins = [ itins[i] for i in itins ]
+		# assign probabilities based on share of total time
+		total_time = sum( [ i['time'] for i in itins ] )
+		for i in itins: i['prob'] = i['time'] / total_time
+		# and sort by prob, highest first
+		itins = sorted(itins, key=lambda k: k['prob'],reverse=True) 
+		return itins
+
+class Itinerary(object):
+	"""A particular way of getting from A to B"""
+	def __init__(self,route_string,all_trips):
+		self.uid = route_string
+		self.trips = []
+		self.total_time_optimal = 0 # seconds
+		# identify relevant trips and link to them
+		for i, trip in enumerate(all_trips): 
+			if trip.itin_uid == self.uid: self.trips.append(trip)
+			if i == 0: continue
+			
+			from_prev = ( trip.depart - trips[i-1].depart )
 			total_time += from_prev
 			if routes not in itins:
 				itins[routes] = { 'count':1, 'time':from_prev }
@@ -110,5 +144,4 @@ class OD(object):
 				itins[routes]['time'] += from_prev
 		for key in itins:
 			itins[key]['time'] = itins[key]['time'] / total_time
-		return itins
 
