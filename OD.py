@@ -124,24 +124,4 @@ class OD(object):
 		itins = sorted(itins, key=lambda k: k['prob'],reverse=True) 
 		return itins
 
-class Itinerary(object):
-	"""A particular way of getting from A to B"""
-	def __init__(self,route_string,all_trips):
-		self.uid = route_string
-		self.trips = []
-		self.total_time_optimal = 0 # seconds
-		# identify relevant trips and link to them
-		for i, trip in enumerate(all_trips): 
-			if trip.itin_uid == self.uid: self.trips.append(trip)
-			if i == 0: continue
-			
-			from_prev = ( trip.depart - trips[i-1].depart )
-			total_time += from_prev
-			if routes not in itins:
-				itins[routes] = { 'count':1, 'time':from_prev }
-			else:
-				itins[routes]['count'] += 1
-				itins[routes]['time'] += from_prev
-		for key in itins:
-			itins[key]['time'] = itins[key]['time'] / total_time
 
