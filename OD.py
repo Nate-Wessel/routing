@@ -1,11 +1,8 @@
 from trip import Trip
 import os, csv
-from datetime import datetime as dt
 from datetime import time
-from pytz import timezone
 from math import log
 input_dir = '/home/nate/dissdata/routing/'
-localTime = timezone('America/Toronto')
 
 class OD(object):
 	"""An O->D pair"""
@@ -19,6 +16,8 @@ class OD(object):
 		# clean out irrelevant trips for both datasets
 		self.remove_trips_outside_window()
 		self.remove_suboptimal_trips()
+		self.allocate_time(self.sched_trips)
+		self.allocate_time(self.retro_trips)
 		# summarize itinerary data
 		self.sched_itins = self.summarize_itineraries(self.sched_trips)
 		self.retro_itins = self.summarize_itineraries(self.retro_trips)
@@ -42,6 +41,13 @@ class OD(object):
 			e=round(self.entropy(self.retro_itins),2)
 		)
 		return( name + sched + retro )
+
+	def allocate_time(self,trips):
+		"""Allocate the time for which this trip is the next fastest, clippng to 
+		the window used for removing trips."""
+		for trip in trips:
+			return trip.depart
+			
 
 	def entropy(self,itineraries):
 		"""shannon entropy of the itinerary probability distribution"""
@@ -75,9 +81,7 @@ class OD(object):
 		for trips in [self.sched_trips,self.retro_trips]:
 			to_remove = []
 			for i, trip in enumerate(trips):
-				arrival = localTime.localize(dt.fromtimestamp(trip.arrive)).time()
-				departure = localTime.localize(dt.fromtimestamp(trip.depart)).time()
-				if departure > end or arrival < start:
+				if trip.local_time('dep') > end or trip.local_time('arr') < start:
 					to_remove.append(i)
 			for i in reversed(to_remove):
 				del trips[i]

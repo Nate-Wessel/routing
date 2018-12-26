@@ -10,7 +10,7 @@ class Trip(object):
 		self.depart = float(depart)
 		self.arrive = float(arrive)
 		self.itinerary = itin # string from otp script
-		self.leading = False # whether trip is first of the day
+		self.time_before = 0 # time from previous fastest trip
 		# get an ordered list of routes only, e.g. ['47','506']
 		segs = self.itinerary.split(',')
 		routes = [ s[1:] for s in segs if s[0] == 'r' ]
@@ -25,10 +25,24 @@ class Trip(object):
 			self.routes = cleaned_routes
 
 	def __repr__(self):
-		local_datetime = localTime.localize( 
-			dt.fromtimestamp(
-				self.depart ) )
-		return str( local_datetime.time() )
+		"""just print the departure time"""
+		return str( self.local_time('departure') )
+
+	def local_time(self,dep_or_arr):
+		if dep_or_arr in ['d','dep','depart','departure']:
+			return localTime.localize( dt.fromtimestamp( self.depart ) ).time()
+		elif dep_or_arr in ['a','arr','arrive','arrival']:
+			return localTime.localize( dt.fromtimestamp( self.arrive ) ).time()
+		else:
+			return None
+
+	def local_date(self,dep_or_arr):
+		if dep_or_arr in ['d','dep','depart','departure']:
+			return localTime.localize( dt.fromtimestamp( self.depart ) ).date()
+		elif dep_or_arr in ['a','arr','arrive','arrival']:
+			return localTime.localize( dt.fromtimestamp( self.arrive ) ).date()
+		else:
+			return None
 
 	@property
 	def itin_uid(self):
