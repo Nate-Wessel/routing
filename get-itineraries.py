@@ -1,9 +1,10 @@
 import requests, multiprocessing, time, os, csv, sys
 from datetime import datetime, timedelta
+from random import shuffle
 
 # where are the things?
 output_dir	= '/home/nate/dissdata/routing/sched/'
-OD_file		= '/home/nate/Dropbox/diss/routing/analysis/ODs.csv'
+OD_file		= 'ODs.csv'
 OTP_server	= 'http://166.48.61.19:8080/otp/routers/ttc-sched/plan'
 
 # define the start time
@@ -177,6 +178,7 @@ for oid in origins:
 
 #all_OD_pairs = [(3,4)]
 print 'will work on',len(all_OD_pairs),'OD pairs'
+shuffle(all_OD_pairs)
 
 # create the process pool
 pool = multiprocessing.Pool(num_procs)
