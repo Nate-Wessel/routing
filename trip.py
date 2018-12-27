@@ -1,14 +1,18 @@
 from datetime import datetime as dt
 from pytz import timezone
-localTime = timezone('America/Toronto')
+EST = timezone('America/Toronto')
 
 
 class Trip(object):
 	"""one shortest trip"""
 	def __init__(self,depart,arrive,itin):
-		# times in unix epoch
-		self.depart = float(depart)
-		self.arrive = float(arrive)
+		# unix timestamps
+		self.depart_ts = float(depart)
+		self.arrive_ts = float(arrive)
+		# localized datetime's
+		self.depart = EST.localize( dt.fromtimestamp( self.depart_ts ) )
+		self.arrive = EST.localize( dt.fromtimestamp( self.arrive_ts ) )
+		# 
 		self.itinerary = itin # string from otp script
 		self.time_before = 0 # time from previous fastest trip
 		# get an ordered list of routes only, e.g. ['47','506']
@@ -26,23 +30,7 @@ class Trip(object):
 
 	def __repr__(self):
 		"""just print the departure time"""
-		return str( self.local_time('departure') )
-
-	def local_time(self,dep_or_arr):
-		if dep_or_arr in ['d','dep','depart','departure']:
-			return localTime.localize( dt.fromtimestamp( self.depart ) ).time()
-		elif dep_or_arr in ['a','arr','arrive','arrival']:
-			return localTime.localize( dt.fromtimestamp( self.arrive ) ).time()
-		else:
-			return None
-
-	def local_date(self,dep_or_arr):
-		if dep_or_arr in ['d','dep','depart','departure']:
-			return localTime.localize( dt.fromtimestamp( self.depart ) ).date()
-		elif dep_or_arr in ['a','arr','arrive','arrival']:
-			return localTime.localize( dt.fromtimestamp( self.arrive ) ).date()
-		else:
-			return None
+		return str( self.local_time('d') )
 
 	@property
 	def itin_uid(self):
@@ -52,4 +40,5 @@ class Trip(object):
 	@property
 	def duration(self):
 		"""length of trip in minutes"""
-		return ( self.arrive - self.depart ) / 60.0
+		return ( self.arrive_ts - self.depart_ts ) / 60.0
+

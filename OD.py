@@ -1,8 +1,15 @@
 from trip import Trip
 import os, csv
-from datetime import time
+import datetime as dt
 from math import log
+from pytz import timezone
 input_dir = '/home/nate/dissdata/routing/'
+
+# define time window to clip to 
+start = dt.time(6,30,0) # h,m,s; 6:30am
+end = dt.time(22,0,0) # h,m,s;  10:00pm
+
+EST = timezone('America/Toronto')
 
 class OD(object):
 	"""An O->D pair"""
@@ -43,11 +50,24 @@ class OD(object):
 		return( name + sched + retro )
 
 	def allocate_time(self,trips):
-		"""Allocate the time for which this trip is the next fastest, clippng to 
-		the window used for removing trips."""
-		for trip in trips:
-			return trip.depart
-			
+		"""Allocate the time (in seconds) for which this trip is the next, 
+		clipping to the window used for removing trips."""
+		# sort the trips by departure
+		trips = sorted(trips, key=lambda k: k.depart) 
+		dates_seen = set()
+		for i, trip in enumerate(trips):
+			if i == 0 or not trip.depart.date() in dates_seen:
+				# trip is first of the day
+				dates_seen |= {trip.depart.date()}
+				# create a localized datetime 
+				start_dt = dt.datetime.combine(trip.depart.date(), start)
+				start_dt = EST.localize( start_dt )
+				from_prev = (trip.depart - start_dt).total_seconds()
+			else:
+				# trip follows previous trip on this day 
+				from_prev = (trip.depart - trips[i-1].depart).total_seconds()
+			trip.time_before = from_prev
+				
 
 	def entropy(self,itineraries):
 		"""shannon entropy of the itinerary probability distribution"""
@@ -76,12 +96,10 @@ class OD(object):
 
 	def remove_trips_outside_window(self):
 		"""clip to trips inside a defined daytime window"""
-		start = time(6,30,0) # h,m,s; 6:30am
-		end = time(22,0,0) # h,m,s;  10:00pm
 		for trips in [self.sched_trips,self.retro_trips]:
 			to_remove = []
 			for i, trip in enumerate(trips):
-				if trip.local_time('dep') > end or trip.local_time('arr') < start:
+				if trip.arrive.time() > end or trip.depart.time() < start:
 					to_remove.append(i)
 			for i in reversed(to_remove):
 				del trips[i]
@@ -112,12 +130,8 @@ class OD(object):
 		# put this in a dict with initial counts
 		itins = { key:{'itin':key,'time':0,'count':0} for key in itins }
 		# add times from trips to each 
-		for i, trip in enumerate(trips):
-			if i == 0: 
-				from_prev = 60
-			else:
-				from_prev = trip.depart - trips[i-1].depart
-			itins[trip.itin_uid]['time'] += from_prev
+		for trip in trips:
+			itins[trip.itin_uid]['time'] += trip.time_before
 			itins[trip.itin_uid]['count'] += 1
 		# change format from dict to list of dicts
 		itins = [ itins[i] for i in itins ]
