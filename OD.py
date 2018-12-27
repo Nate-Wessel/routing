@@ -33,20 +33,19 @@ class OD(object):
 
 	def __repr__(self):
 		name = self.orig['nomen']+' -> '+self.dest['nomen']
-		entropy = '\n\tentropy-s:{},r:{}'.format(
-			round(self.entropy(self.sched_itins),2),
-			round(self.entropy(self.retro_itins),2)
-		)
-		sched = '\n\tsched | En:{e} Pr:{p}, It:{i}'.format(
-			i=self.sched_itins[0]['itin'], 
-			p=round(self.sched_itins[0]['prob'],3),
-			e=round(self.entropy(self.sched_itins),2)
-		)
-		retro = '\n\tretro | En:{e} Pr:{p}, It:{i}'.format(
-			i=self.retro_itins[0]['itin'], 
-			p=round(self.retro_itins[0]['prob'],3),
-			e=round(self.entropy(self.retro_itins),2)
-		)
+		sched = '\n\tsched | entropy:{}'.format(
+			round(self.entropy(self.sched_itins),2) )
+		retro = '\n\tretro | entropy:{}'.format(
+			round(self.entropy(self.retro_itins),2) )
+		for i in [0,1]:
+			if i < len(self.sched_itins):
+				sched += '\n\t\tPr:{pr}, It:{it}'.format(
+					it=self.sched_itins[i]['itin'], 
+					pr=round(self.sched_itins[i]['prob'],3) )
+			if i < len(self.retro_itins):
+				retro += '\n\t\tPr:{pr}, It:{it}'.format(
+					it=self.retro_itins[i]['itin'], 
+					pr=round(self.retro_itins[i]['prob'],3) )
 		return( name + sched + retro )
 
 	def allocate_time(self,trips):
