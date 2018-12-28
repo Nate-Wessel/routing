@@ -9,11 +9,10 @@ OTP_server	= 'http://166.48.61.19:8080/otp/routers/ttc-sched/plan'
 
 # define the start time
 start_time = datetime( year=2017, month=11, day=10 )
-print 'from ', start_time
-
+print('from ',start_time)
 # and go for how long?
 end_time = start_time + timedelta(hours=24)
-print 'until', end_time
+print('until',end_time)
 
 # how many processors to use?
 num_procs = 6
@@ -21,14 +20,26 @@ num_procs = 6
 # difference from server time zone in seconds
 TZdiff = 3600 * 0
 
-# read in the OD data
+# read in the OD location data
 points = {}
 with open(OD_file) as csvfile:
-	reader = csv.reader(csvfile, delimiter=',')
-	for uid,lon,lat,nomen in reader:
-		if uid == 'uid':
-			continue
-		points[int(uid)] = {'lat':float(lat),'lon':float(lon)}
+	reader = csv.DictReader(csvfile, delimiter=',')
+	for r in reader:
+		points[int(r['uid'])] = {'lat':float(r['lat']),'lon':float(r['lon'])}
+
+# read in the selected set of OD's to analyze
+OD_pairs = []
+with open('1k_od_sample.csv') as csvfile:
+	reader = csv.DictReader(csvfile, delimiter=',')
+	for r in reader:
+		# skip if the results already exist
+		#if not os.path.exists(output_dir+r['o']+'/'+r['d']+'.csv'):
+		OD_pairs.append( (int(r['o']),int(r['d'])) )
+#OD_pairs = [(365,363)]
+print(len(OD_pairs),'pairs to work on')
+shuffle(OD_pairs)
+
+
 
 
 def calc_od(od_tuple):
@@ -37,6 +48,7 @@ def calc_od(od_tuple):
 	function_start_time = time.time() # for timing the function
 	# get the OD geometries
 	oid,did = od_tuple
+	print('starting',oid,'->',did)
 	o,d = points[oid], points[did]
 	# define the static OTP routing parameters
 	options = {
@@ -67,13 +79,13 @@ def calc_od(od_tuple):
 		try:
 			result = response.json()
 		except:
-			print 'json error at',t,response.text
+			print('json error at',t,response.text)
 			t += timedelta(minutes=5)
 			continue 
 		# check for errors
 		if 'error' in result:
 			# print an error message
-			print oid,'-->',did,' -- ',result['error']['message'],'at',t 
+			print(oid,'-->',did,' -- ',result['error']['message'],'at',t) 
 			# then add a good chunk of time before trying again
 			t += timedelta(minutes=10)
 			continue
@@ -89,7 +101,7 @@ def calc_od(od_tuple):
 		# more optimized method to save time on future requests
 		if arrival in trips and not 'reverseOptimizeOnTheFly' in options:
 			options['reverseOptimizeOnTheFly'] = 'true'
-			print '\toptimizing on-the-fly'
+			print('\toptimizing on-the-fly')
 		# and store the result
 		trips[arrival] = { 'departure':departure, 'itinerary':legs }
 		# in case this is a walk only result, increment by more than a minute
@@ -102,7 +114,7 @@ def calc_od(od_tuple):
 	# save the output
 	write_output(trips,oid,did)
 	# let us know what's going on
-	print oid,'->',did,'took',round(time.time()-function_start_time,2),'& found',len(trips)
+	print( oid,'->',did,'took',round(time.time()-function_start_time,2),'& found',len(trips) )
 
 
 def summarize_legs(itinerary):
@@ -122,69 +134,34 @@ def summarize_legs(itinerary):
 			legs.append( 'r'+ leg['route'] )
 			legs.append( dest_stop ) 
 		else:
-			print response.url
+			print(response.url)
 	return legs
 
 def write_output(trips,oid,did):
 	"""after all the results are in, output a file, even an empty one to show 
-	that the work is done"""
-	# store results in folders named after origins, 
-	# files named after destinations
+	that the work is done. store results in folders named after origins, 
+	files named after destinations"""
 	if not os.path.exists(output_dir+str(oid)):
 		os.makedirs(output_dir+str(oid))
-	outfile = open(output_dir+str(oid)+'/'+str(did)+'.csv','w')
-	# CSV files
-	outfile.write('o,d,depart,arrive,itinerary')
-	# now we're going to sort by the keys (arrival times)
-	arrival_times = trips.keys()
-	arrival_times.sort()
-	for arrival in arrival_times:
-		outfile.write(
-			'\n'+str(oid)+','+str(did)+','+
-			# cast these to datetime
-			str(trips[arrival]['departure'])+','+str(arrival)+','+
-			# format as a postgresql array literal
-			'"{'+','.join(trips[arrival]['itinerary'])+'}"' 
-		)
-	outfile.close()
-	return
-
-
-# build out a list of every O->D combination to work on and make sure 
-# there is a directory structure to store the results
-all_OD_pairs = []
-if len(sys.argv) == 1:
-	# no args given, do all calculations not already done
-	origins = points.keys()
-elif len(sys.argv) > 1:
-	# list of origin IDs provided, just convert to a list of ints
-	origins = [ int(i) for i in sys.argv[1:] ]
-
-for oid in origins:
-	# see if the results folder exists, if not make it
-#	if not os.path.exists(output_dir+str(oid)):
-#		os.makedirs(output_dir+str(oid))
-	for did, dp in points.items():
-		# skip reflexive pairs
-		if oid == did:
-			continue
-		# skip pairs with results already
-		fpath = output_dir+str(oid)+'/'+str(did)+'.csv'
-		if os.path.exists(fpath):
-			continue
-		#calc_od( (oid,did) )
-		# append a tuple with the IDs
-		all_OD_pairs.append( ( oid, did ) )
-
-#all_OD_pairs = [(3,4)]
-print 'will work on',len(all_OD_pairs),'OD pairs'
-shuffle(all_OD_pairs)
+	with open(output_dir+str(oid)+'/'+str(did)+'.csv','w+') as outfile:
+		outfile.write('o,d,depart,arrive,itinerary')
+		# now we're going to sort by the keys (arrival times)
+		arrival_times = list(trips.keys())
+		arrival_times.sort()
+		for arrival in arrival_times:
+			outfile.write(
+				'\n'+str(oid)+','+str(did)+','+
+				# cast these to datetime
+				str(trips[arrival]['departure'])+','+str(arrival)+','+
+				# format as a postgresql array literal
+				'"{'+','.join(trips[arrival]['itinerary'])+'}"' 
+			)
 
 # create the process pool
 pool = multiprocessing.Pool(num_procs)
 # and get it started
-pool.map(calc_od,all_OD_pairs,chunksize=1)
+pool.map(calc_od,OD_pairs,chunksize=1)
 
-print 'COMPLETED!'
+print('COMPLETED!')
 
 
