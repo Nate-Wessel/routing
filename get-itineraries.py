@@ -33,8 +33,8 @@ with open('1k_od_sample.csv') as csvfile:
 	reader = csv.DictReader(csvfile, delimiter=',')
 	for r in reader:
 		# skip if the results already exist
-		#if not os.path.exists(output_dir+r['o']+'/'+r['d']+'.csv'):
-		OD_pairs.append( (int(r['o']),int(r['d'])) )
+		if not os.path.exists(output_dir+r['o']+'/'+r['d']+'.csv'):
+			OD_pairs.append( (int(r['o']),int(r['d'])) )
 #OD_pairs = [(365,363)]
 print(len(OD_pairs),'pairs to work on')
 shuffle(OD_pairs)
@@ -130,7 +130,8 @@ def summarize_legs(itinerary):
 			# add both stops and the route number
 			orig_stop = 's'+ leg['from']['stopId'][2:] # remove the '1:'
 			dest_stop = 's'+ leg['to']['stopId'][2:]   # remove the '1:'
-			if legs[-1] != orig_stop: legs.append( orig_stop ) 
+			if len(legs) == 0 or legs[-1] != orig_stop: 
+				legs.append( orig_stop ) 
 			legs.append( 'r'+ leg['route'] )
 			legs.append( dest_stop ) 
 		else:
