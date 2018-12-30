@@ -33,19 +33,13 @@ class OD(object):
 
 	def __repr__(self):
 		name = self.orig['nomen']+' -> '+self.dest['nomen']
-		sched = '\n\tsched | entropy:{}'.format(
-			round(self.entropy(self.sched_itins),2) )
-		retro = '\n\tretro | entropy:{}'.format(
-			round(self.entropy(self.retro_itins),2) )
-		for i in [0,1]:
-			if i < len(self.sched_itins):
-				sched += '\n\t\tPr:{pr}, It:{it}'.format(
-					it=self.sched_itins[i]['itin'], 
-					pr=round(self.sched_itins[i]['prob'],3) )
-			if i < len(self.retro_itins):
-				retro += '\n\t\tPr:{pr}, It:{it}'.format(
-					it=self.retro_itins[i]['itin'], 
-					pr=round(self.retro_itins[i]['prob'],3) )
+		sched = '\n\tsched | entropy:{}'.format( round(self.sched_entropy,2) )
+		retro = '\n\tretro | entropy:{}'.format( round(self.retro_entropy,2) )
+		for i in [0,1,2]:
+			sched += '\n\t\tPr:{}, '.format( round(self.sched_itin_p(i),3) )
+			retro += '\n\t\tPr:{}, '.format( round(self.retro_itin_p(i),3) )
+			sched += 'It:{}'.format( self.sched_itin(i) )
+			retro += 'It:{}'.format( self.retro_itin(i) ) 
 		return( name + sched + retro )
 
 	def allocate_time(self,trips):
@@ -141,4 +135,29 @@ class OD(object):
 		itins = sorted(itins, key=lambda k: k['prob'],reverse=True) 
 		return itins
 
+	# here be some simplifying properties/methods
+	
+	@property
+	def sched_entropy(self):
+		"""schedule-based entropy"""
+		return self.entropy(self.sched_itins)
+	@property
+	def retro_entropy(self):
+		"""retro-spective entropy"""
+		return self.entropy(self.retro_itins)
+
+	def sched_itin(self,i):
+		"""scheduled itinerary at the given index if any"""
+		return self.sched_itins[i]['itin'] if i < len(self.sched_itins) else ''
+	def retro_itin(self,i):
+		"""scheduled itinerary at the given index if any"""
+		return self.retro_itins[i]['itin'] if i < len(self.retro_itins) else ''
+
+	def sched_itin_p(self,i):
+		"""scheduled itinerary probability at the given index if any"""
+		return self.sched_itins[i]['prob'] if i < len(self.sched_itins) else 0
+	def retro_itin_p(self,i):
+		"""scheduled itinerary probability at the given index if any"""
+		return self.retro_itins[i]['prob'] if i < len(self.retro_itins) else 0
+	
 
