@@ -18,8 +18,8 @@ class OD(object):
 		self.orig = origin
 		self.dest = dest
 		# read in the trip itineraries
-		self.sched_trips = self.get_all_trips('sched')
 		self.retro_trips = self.get_all_trips('retro')
+		self.sched_trips = self.get_all_trips('sched')
 		# clean out irrelevant trips for both datasets
 		self.remove_trips_outside_window()
 		self.remove_suboptimal_trips()
@@ -30,6 +30,9 @@ class OD(object):
 		self.retro_itins = self.summarize_itineraries(self.retro_trips)
 		# print summary info, including entropy
 		print(self)
+		for trip in self.retro_trips:
+			trip.verify()
+		raise SystemExit
 
 	def __repr__(self):
 		name = self.orig['nomen']+' -> '+self.dest['nomen']
