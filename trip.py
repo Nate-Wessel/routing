@@ -3,7 +3,6 @@ from pytz import timezone
 EST = timezone('America/Toronto')
 import db
 
-
 class Trip(object):
 	"""one shortest trip"""
 	def __init__(self,depart,arrive,itin):
@@ -44,16 +43,27 @@ class Trip(object):
 		return ( self.arrive_ts - self.depart_ts ) / 60.0
 
 	def verify(self):
-		"""try to verify this trip from the database"""
-		print(self.depart_ts,self.itinerary)
-		# iterate over route segments
+		"""Try to verify this trip, or something close to it exists in the 
+		database."""
+		# iterate over *route* segments
 		steps = self.itinerary.split(',')
+		print(steps)
+		time = self.depart_ts
 		for i, step in enumerate( steps ):
 			if step[0] != 'r': 
 				continue
-			stop1 = steps[i-1][1:].strip('_')
-			route = steps[i  ][1:]
-			stop2 = steps[i+1][1:].strip('_')
-			print(stop1,route,stop2)
-			print(db.o2d_at(stop1,stop2,self.depart_ts))
+			# make sure we know where stuff is
+			assert steps[i+2][0] == 'w'
+			assert steps[i-1][0] == 's' and steps[i+1][0] == 's'
+			# get IDs of stops for boarding and disembarking
+			stop1 = int(steps[i-1][1:].strip('_'))
+		#	route = steps[i  ][1:]
+			stop2 = int(steps[i+1][1:].strip('_'))
+			walk_meters  = int(steps[i+2][1:])
+			# Query the database about this supposed trip
+			# pushing time forward from the departure to the arrival at the next stop
+			( time, route_id ) = db.o2d_at( stop1, stop2, time )
+			# add time for walking to the next stop
+			time += walk_meters * 1.2
+		print( round((time-self.arrive_ts)/60.,2) )
 

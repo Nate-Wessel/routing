@@ -3,7 +3,7 @@ import psycopg2
 
 # connect and establish a cursor, based on parameters in conf.py
 conn_string = (
-	"host='localhost' dbname='diss_access' user='nate' password=''" )
+	"host='localhost' dbname='diss_access' user='nate' password='mink'" )
 connection = psycopg2.connect(conn_string)
 connection.autocommit = True
 
@@ -18,10 +18,10 @@ def o2d_at(o_stop,d_stop,departure_unix_time):
 	c.execute(
 		"""
 			SELECT 
-				t.trip_id,
+				--t.trip_id,
 				t.route_id,
-				st1.etime AS departure,
-				st2.etime AS arrival
+				--st1.etime AS boarding_time,
+				st2.etime AS arrival_time
 			FROM ttc_stop_times AS st1
 			JOIN ttc_trips AS t 
 				ON t.trip_id = st1.trip_id
@@ -40,7 +40,7 @@ def o2d_at(o_stop,d_stop,departure_unix_time):
 		}
 	)
 	try:
-		(trip_id,route_id,departure,arrival) = c.fetchone()
-		return trip_id, route_id, departure, arrival
+		( route_id, arrival_time ) = c.fetchone()
+		return arrival_time, route_id
 	except:
-		return None
+		return None, None
