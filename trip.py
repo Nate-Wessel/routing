@@ -53,17 +53,21 @@ class Trip(object):
 			if step[0] != 'r': 
 				continue
 			# make sure we know where stuff is
-			assert steps[i+2][0] == 'w'
 			assert steps[i-1][0] == 's' and steps[i+1][0] == 's'
 			# get IDs of stops for boarding and disembarking
 			stop1 = int(steps[i-1][1:].strip('_'))
-		#	route = steps[i  ][1:]
 			stop2 = int(steps[i+1][1:].strip('_'))
-			walk_meters  = int(steps[i+2][1:])
 			# Query the database about this supposed trip
 			# pushing time forward from the departure to the arrival at the next stop
 			( time, route_id ) = db.o2d_at( stop1, stop2, time )
-			# add time for walking to the next stop
-			time += walk_meters * 1.2
-		print( round((time-self.arrive_ts)/60.,2) )
+			# make sure we got some result
+			if not route_id:
+				expected_route = step[1:]
+				print('\t',expected_route,'segment not confirmed')
+				return
+			# add time for walking to the next stop based on 
+			# walking distance in meters if any
+			if steps[i+2][0] == 'w':
+				time += int(steps[i+2][1:]) * 1.2 # meters * mps
+		print('\t', round(time-self.arrive_ts,2) )
 
