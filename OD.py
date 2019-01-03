@@ -32,7 +32,6 @@ class OD(object):
 		print(self)
 		for trip in self.retro_trips:
 			trip.verify()
-		raise SystemExit
 
 	def __repr__(self):
 		name = self.orig['nomen']+' -> '+self.dest['nomen']

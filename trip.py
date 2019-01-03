@@ -43,11 +43,11 @@ class Trip(object):
 		return ( self.arrive_ts - self.depart_ts ) / 60.0
 
 	def verify(self):
-		"""Try to verify this trip, or something close to it exists in the 
+		"""Try to verify that this trip, or something close to it, exists in the 
 		database."""
 		# iterate over *route* segments
 		steps = self.itinerary.split(',')
-		print(steps)
+#		print(steps)
 		time = self.depart_ts
 		for i, step in enumerate( steps ):
 			if step[0] != 'r': 
@@ -57,17 +57,19 @@ class Trip(object):
 			# get IDs of stops for boarding and disembarking
 			stop1 = int(steps[i-1][1:].strip('_'))
 			stop2 = int(steps[i+1][1:].strip('_'))
+			expected_route = step[1:]
 			# Query the database about this supposed trip
 			# pushing time forward from the departure to the arrival at the next stop
 			( time, route_id ) = db.o2d_at( stop1, stop2, time )
 			# make sure we got some result
 			if not route_id:
-				expected_route = step[1:]
 				print('\t',expected_route,'segment not confirmed')
 				return
+			if route_id != expected_route:
+				print('\tdifferent route used:',route_id,'but expected',expected_route)
 			# add time for walking to the next stop based on 
 			# walking distance in meters if any
 			if steps[i+2][0] == 'w':
-				time += int(steps[i+2][1:]) * 1.2 # meters * mps
+				time += int(steps[i+2][1:]) / 1.5 # meters / mps = seconds required
 		print('\t', round(time-self.arrive_ts,2) )
 

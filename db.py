@@ -30,8 +30,9 @@ def o2d_at(o_stop,d_stop,departure_unix_time):
 			WHERE 
 				st1.stop_uid = %(o_stop)s AND
 				st1.etime > %(time)s AND
-				st2.stop_uid = %(d_stop)s
-			ORDER BY st1.etime ASC, st2.etime DESC
+				st2.stop_uid = %(d_stop)s AND
+				st1.stop_sequence < st2.stop_sequence -- stops are ordered 
+			ORDER BY st1.etime, st2.etime ASC
 			LIMIT 1
 		""",
 		{ 
@@ -44,3 +45,5 @@ def o2d_at(o_stop,d_stop,departure_unix_time):
 		return arrival_time, route_id
 	except:
 		return None, None
+
+#def itinerary_trips()
