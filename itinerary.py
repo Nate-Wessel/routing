@@ -7,7 +7,7 @@ class Itinerary(object):
 		"""Parse an itinerary from get-itineraries.py. 
 		e.g. '{w28,s2773,r45,s2859,w42,s3280,r300,s7168,w36}' """
 		self.walk_speed = 2 # meters / second
-		self.original_itinerary = itinerary
+		self.original = itinerary
 		self.segments = [] # segment starts with walking to a stop, ends at a stop
 		# remove SQL brackets
 		itinerary = itinerary.strip('{}')
@@ -40,9 +40,22 @@ class Itinerary(object):
 		return [ s['stop2'] for s in self.segments ]
 	@property
 	def routes(self):
-		"""return an ordered list of origin stops"""
+		"""return an ordered list of routes used"""
 		return [ s['route'] for s in self.segments ]
 	@property
+	def collapsed_routes(self):
+		"""sames as routes, but collapses any identical subsequent routes
+		TODO check this works"""
+		all_routes = self.routes
+		if len(all_routes) <= 1 or len(all_routes) == len(set(all_routes)):
+			return all_routes
+		else: # else cleaning is necessary
+			cleaned_routes = [all_routes[0]]
+			for i, route in enumerate(all_routes):
+				if i > 0 and route != all_routes[i-1]:
+					cleaned_routes.append(route)
+			return cleaned_routes
+	@property
 	def walk_distance(self):
-		"""return an ordered list of origin stops"""
+		"""return the total walking distance in meters"""
 		return sum( [ s['walk'] for s in self.segments ] ) + self.final_walk
