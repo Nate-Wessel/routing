@@ -3,17 +3,22 @@
 from OD import OD
 import csv
 
-# get a list of ODs from file
-with open('personal-ODs.csv') as f:
+# get a list of all ODs from file
+all_locations = {}
+with open('ODs.csv') as f:
 	reader = csv.DictReader(f)
-	locations = [ dict(r) for r in reader ]
+	for r in reader:
+		all_locations[r['uid']] = dict(r)
 
-# loop over OD combinations
+# read in a list of prespecified pairs
 ODs = []
-for o in locations:
-	for d in locations:
-		if o['uid'] == d['uid']: continue
-		ODs.append( OD(o,d) )
+with open('1_od.csv') as f:
+	reader = csv.DictReader(f)
+	for r in reader:
+		ODs.append( OD(
+			all_locations[ r['o'] ], 
+			all_locations[ r['d'] ] 
+		) )
 
 # write out a summary file
 with open('summary.csv','w+') as f:
