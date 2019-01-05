@@ -101,22 +101,22 @@ class OD(object):
 			#print('\t',len(to_remove),'trips removed from window')
 
 	def remove_suboptimal_trips(self):
-		# TODO make sure this actually does what it is supposed to
 		"""If a trip departs earlier but gets in later than another trip it is 
 		suboptimal and needs to be removed. Do this for both scheduled and 
 		retrospective trips."""
 		for trips in [self.sched_trips,self.retro_trips]:
-			trips.sort(key = lambda x: x.arrive)
-			#trips.sort() # by arrival
-			bad_trips = []
-			for i, trip in enumerate(trips):
-				# first one is good by definition
-				if i == 0: continue
-				if trip.depart < trips[i-1].depart:
-					bad_trips.append(i)
-			for i in reversed(bad_trips):
-				trips.pop(i)
-			#print('\t',len(bad_trips),'suboptimal trips removed')
+			starting_length = len(trips)
+			# Sort by arrival, then search for trips not also sorted by departure
+			trips.sort(key = lambda x: x.arrive_ts) # arrival, first to last
+			fully_sorted = False # starting assumption
+			while not fully_sorted:
+				for i, trip in enumerate(trips):
+					# if departure is before that of earlier-arriving trip
+					if i > 0 and trip.depart_ts <= trips[i-1].depart_ts:
+						trips.pop(i)
+						continue
+				fully_sorted = True 
+			print('\t',starting_length - len(trips),'suboptimal trips removed')
 		
 	def summarize_itineraries(self,trips):
 		"""proportions of fastest trip itineraries"""
