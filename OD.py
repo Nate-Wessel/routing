@@ -30,13 +30,15 @@ class OD(object):
 		self.retro_itins = self.summarize_itineraries(self.retro_trips)
 		# print summary info, including entropy
 		print(self)
-		for trip in self.retro_trips:
-			trip.verify()
+		#for trip in self.retro_trips:
+		#	trip.verify()
 
 	def __repr__(self):
 		name = self.orig['nomen']+' -> '+self.dest['nomen']
-		sched = '\n\tsched | entropy:{}'.format( round(self.sched_entropy,2) )
-		retro = '\n\tretro | entropy:{}'.format( round(self.retro_entropy,2) )
+		sched = '\n\tsched | entropy:{} | trips:{}'.format( 
+			round(self.sched_entropy,2), len(self.sched_trips) )
+		retro = '\n\tretro | entropy:{} | trips:{}'.format( 
+			round(self.retro_entropy,2), len(self.retro_trips) )
 		for i in [0,1,2]:
 			sched += '\n\t\tPr:{}, '.format( round(self.sched_itin_p(i),3) )
 			retro += '\n\t\tPr:{}, '.format( round(self.retro_itin_p(i),3) )
