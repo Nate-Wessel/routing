@@ -9,8 +9,7 @@ with open('ODs.csv') as f:
 	for r in reader:
 		all_locations[r['uid']] = dict(r)
 
-# read in a list of prespecified pairs
-with open('1_od.csv') as f:
-	reader = csv.DictReader(f)
-	for r in reader:
-		OD(all_locations[ r['o'] ], all_locations[ r['d'] ] )
+# these need to be specified as strings
+o = '12'
+d = '316'
+od = OD(all_locations[o], all_locations[d] )

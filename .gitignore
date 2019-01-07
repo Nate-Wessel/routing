@@ -1,0 +1,8 @@
+# ignore folder:
+untracked/
+
+# python files
+__pycache__/
+
+# ever changing
+summary.csv
