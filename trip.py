@@ -4,6 +4,9 @@ EST = timezone('America/Toronto')
 import db
 from itinerary import Itinerary
 
+walk_speed = 1.34112 # 3mph in meters per second 
+# (http://dev.opentripplanner.org/apidoc/1.0.0/resource_PlannerResource.html)
+
 class Trip(object):
 	"""one shortest trip"""
 	def __init__(self,depart,arrive,itin):
@@ -40,7 +43,11 @@ class Trip(object):
 			expected_route = step['route']
 			# Query the database about this supposed trip
 			# pushing time forward from the departure to the arrival at the next stop
-			( time, route_id ) = db.o2d_at( step['stop1'], step['stop2'], time + step['walk']/2.)
+			( time, route_id ) = db.o2d_at( 
+				step['stop1'], 
+				step['stop2'], 
+				time + step['walk']/walk_speed
+			)
 			# make sure we got some result
 			if not route_id:
 				print('\t',expected_route,'segment not confirmed')
@@ -48,6 +55,7 @@ class Trip(object):
 			if route_id != expected_route:
 				print('\tdifferent route used:',route_id,'but expected',expected_route)
 		# add time for walking to the final destination
-		time += self.itinerary.final_walk / 2.
-		print('\t', round(time-self.arrive_ts,2), self.depart_ts, self.arrive_ts, self.itinerary.original )
+		time += self.itinerary.final_walk / walk_speed
+		diff_pct = (time-self.arrive_ts) / (self.arrive_ts-self.depart_ts)
+		print('\t{:.2%}'.format(diff_pct) , self.itinerary.original )
 

@@ -3,7 +3,7 @@ import psycopg2
 
 # connect and establish a cursor, based on parameters in conf.py
 conn_string = (
-	"host='localhost' dbname='diss_access' user='nate' password='mink'" )
+	"host='localhost' dbname='routing' user='nate' password='mink'" )
 connection = psycopg2.connect(conn_string)
 connection.autocommit = True
 
