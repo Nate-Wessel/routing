@@ -5,14 +5,14 @@ import csv
 
 # get a list of all ODs from file
 all_locations = {}
-with open('ODs.csv') as f:
+with open('data/ODs.csv') as f:
 	reader = csv.DictReader(f)
 	for r in reader:
 		all_locations[r['uid']] = dict(r)
 
 # read in a list of prespecified pairs
 ODs = []
-with open('1_od.csv') as f:
+with open('data/1_od.csv') as f:
 	reader = csv.DictReader(f)
 	for r in reader:
 		ODs.append( OD(
@@ -21,7 +21,7 @@ with open('1_od.csv') as f:
 		) )
 
 # write out a summary file
-with open('summary.csv','w+') as f:
+with open('data/summary.csv','w+') as f:
 	fieldnames = [
 		'oid','did',
 		'sched_ent','retro_ent',
