@@ -25,11 +25,6 @@ class Trip(object):
 		return str( self.local_time('d') )
 
 	@property
-	def itin_uid(self):
-		"""string defining the itinerary"""
-		return ';'.join(self.itinerary.collapsed_routes)
-
-	@property
 	def duration(self):
 		"""length of trip in minutes"""
 		return ( self.arrive_ts - self.depart_ts ) / 60.0

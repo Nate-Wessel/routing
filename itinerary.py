@@ -30,6 +30,16 @@ class Itinerary(object):
 				'walk':walk, 'stop1':stop1, 'stop2':stop2, 'route':route
 			} )
 
+	def __repr__(self):
+		"""just the original itinerary string used to coonstruct the object"""
+		return self.original
+
+	def __eq__(self,other):
+		return self.original == other.original
+
+	def __hash__(self):
+		return hash(self.original)
+
 	@property
 	def o_stops(self):
 		"""return an ordered list of origin stops"""

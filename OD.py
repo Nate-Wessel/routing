@@ -3,6 +3,7 @@ import os, csv
 import datetime as dt
 from math import log
 from pytz import timezone
+import db
 input_dir = '/home/nate/dissdata/routing/'
 
 # define time window to clip to 
@@ -30,8 +31,6 @@ class OD(object):
 		self.retro_itins = self.summarize_itineraries(self.retro_trips)
 		# print summary info, including entropy
 		print(self)
-		#for trip in self.retro_trips:
-		#	trip.verify()
 
 	def __repr__(self):
 		name = self.orig['nomen']+' -> '+self.dest['nomen']
@@ -45,6 +44,13 @@ class OD(object):
 			sched += 'It:{}'.format( self.sched_itin(i) )
 			retro += 'It:{}'.format( self.retro_itin(i) ) 
 		return( name + sched + retro )
+
+	def get_alt_trips(self):
+		"""testing..."""
+		for trip in self.retro_trips:
+			pass
+		# get top three retro itineraries
+		#db.all_itinerary_trips(self.sched_itin(0))
 
 	def allocate_time(self,trips):
 		"""Allocate the time (in seconds) for which this trip is the next, 
@@ -123,13 +129,13 @@ class OD(object):
 	def summarize_itineraries(self,trips):
 		"""proportions of fastest trip itineraries"""
 		# get distinct itineraries
-		itins = set([trip.itin_uid for trip in trips])
+		itins = set([trip.itinerary for trip in trips])
 		# put this in a dict with initial counts
 		itins = { key:{'itin':key,'time':0,'count':0} for key in itins }
 		# add times from trips to each 
 		for trip in trips:
-			itins[trip.itin_uid]['time'] += trip.time_before
-			itins[trip.itin_uid]['count'] += 1
+			itins[trip.itinerary]['time'] += trip.time_before
+			itins[trip.itinerary]['count'] += 1
 		# change format from dict to list of dicts
 		itins = [ itins[i] for i in itins ]
 		# assign probabilities based on share of total time
