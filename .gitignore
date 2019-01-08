@@ -5,4 +5,4 @@ untracked/
 __pycache__/
 
 # ever changing
-summary.csv
+data/summary.csv
