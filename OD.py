@@ -29,8 +29,6 @@ class OD(object):
 		# summarize itinerary data
 		self.sched_itins = self.summarize_itineraries(self.sched_trips)
 		self.retro_itins = self.summarize_itineraries(self.retro_trips)
-		# print summary info, including entropy
-		print(self)
 
 	def __repr__(self):
 		name = str(self.orig)+' -> '+str(self.dest)
