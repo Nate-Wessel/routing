@@ -3,12 +3,12 @@ from datetime import datetime, timedelta
 from random import shuffle
 
 # where are the things?
-output_dir	= '/home/nate/dissdata/routing/sched/'
-OD_file		= 'ODs.csv'
-OTP_server	= 'http://166.48.61.19:8080/otp/routers/ttc-sched/plan'
+output_dir	= '/home/nate/dissdata/routing/17476/'
+OD_file		= 'data/ODs.csv'
+OTP_server	= 'http://166.48.61.19:8080/otp/routers/ttc-17476/plan'
 
 # define the start time
-start_time = datetime( year=2017, month=11, day=10 )
+start_time = datetime( year=2017, month=11, day=6 )
 print('from ',start_time)
 # and go for how long?
 end_time = start_time + timedelta(hours=24)
@@ -27,15 +27,23 @@ with open(OD_file) as csvfile:
 	for r in reader:
 		points[int(r['uid'])] = {'lat':float(r['lat']),'lon':float(r['lon'])}
 
-# read in the selected set of OD's to analyze
+# read in the set of OD's to analyze
+all_pairs = False
 OD_pairs = []
-with open('1k_od_sample.csv') as csvfile:
-	reader = csv.DictReader(csvfile, delimiter=',')
-	for r in reader:
-		# skip if the results already exist
-		if not os.path.exists(output_dir+r['o']+'/'+r['d']+'.csv'):
-			OD_pairs.append( (int(r['o']),int(r['d'])) )
-#OD_pairs = [(365,363)]
+if all_pairs:
+	for oid in points.keys():
+		for did in points.keys():
+			if oid == did: continue
+			if not os.path.exists(output_dir+str(oid)+'/'+str(did)+'.csv'):
+				OD_pairs.append( (oid,did) )
+else:
+	with open('data/from-home-trips.csv') as csvfile:
+		reader = csv.DictReader(csvfile, delimiter=',')
+		for r in reader:
+			# skip if the results already exist
+			if not os.path.exists(output_dir+r['o']+'/'+r['d']+'.csv'):
+				OD_pairs.append( (int(r['o']),int(r['d'])) )
+
 print(len(OD_pairs),'pairs to work on')
 shuffle(OD_pairs)
 
