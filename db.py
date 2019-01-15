@@ -95,7 +95,9 @@ def all_itinerary_trips(itin):
 				) AS whatev
 				WHERE row_number = 1
 			)
-			SELECT trips, routes, departure, arrival
+			SELECT 
+				--trips, routes, 
+				departure, arrival
 			FROM sub
 			WHERE depth = %(final_depth)s;
 		""", { 
