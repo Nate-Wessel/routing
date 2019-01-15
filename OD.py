@@ -15,7 +15,7 @@ EST = timezone('America/Toronto')
 class OD(object):
 	"""An O->D pair"""
 	def __init__(self,origin,dest):
-		"""origin and dest are dictionaries of the values from the ODs.csv file"""
+		"""origin and dest are integer IDs"""
 		self.orig = origin
 		self.dest = dest
 		# read in the trip itineraries
