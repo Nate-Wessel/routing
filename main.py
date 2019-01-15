@@ -3,22 +3,12 @@
 from OD import OD
 import csv
 
-# get a list of all ODs from file
-all_locations = {}
-with open('data/ODs.csv') as f:
-	reader = csv.DictReader(f)
-	for r in reader:
-		all_locations[r['uid']] = dict(r)
-
 # read in a list of prespecified pairs
 ODs = []
-with open('data/1_od.csv') as f:
+with open('data/from-home-trips.csv') as f:
 	reader = csv.DictReader(f)
 	for r in reader:
-		ODs.append( OD(
-			all_locations[ r['o'] ], 
-			all_locations[ r['d'] ] 
-		) )
+		ODs.append( OD( r['o'], r['d'] ) )
 
 # write out a summary file
 with open('data/summary.csv','w+') as f:

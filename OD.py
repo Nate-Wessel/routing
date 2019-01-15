@@ -33,7 +33,7 @@ class OD(object):
 		print(self)
 
 	def __repr__(self):
-		name = self.orig['nomen']+' -> '+self.dest['nomen']
+		name = str(self.orig)+' -> '+str(self.dest)
 		sched = '\n\tsched | entropy:{} | trips:{}'.format( 
 			round(self.sched_entropy,2), len(self.sched_trips) )
 		retro = '\n\tretro | entropy:{} | trips:{}'.format( 
@@ -47,10 +47,8 @@ class OD(object):
 
 	def get_alt_trips(self):
 		"""testing..."""
-		for trip in self.retro_trips:
-			pass
 		# get top three retro itineraries
-		#db.all_itinerary_trips(self.sched_itin(0))
+		pass
 
 	def allocate_time(self,trips):
 		"""Allocate the time (in seconds) for which this trip is the next, 
@@ -88,7 +86,7 @@ class OD(object):
 			directories = ['17476','17477','17478','17479','17480']
 		trips = []
 		for d in directories:
-			csvpath = input_dir+d+'/'+self.orig['uid']+'/'+self.dest['uid']+'.csv'
+			csvpath = input_dir+d+'/'+str(self.orig)+'/'+str(self.dest)+'.csv'
 			if not os.path.exists(csvpath): continue			
 			with open(csvpath) as f:
 				reader = csv.DictReader(f)	
