@@ -51,7 +51,10 @@ class OD(object):
 				# trip is first of the day
 				dates_seen |= {trip.depart.date()}
 				# create a localized datetime 
-				start_dt = dt.datetime.combine(trip.depart.date(), config.start)
+				start_dt = dt.datetime.combine(
+					trip.depart.date(), 
+					config.window_start_time
+				)
 				start_dt = config.tz.localize( start_dt )
 				from_prev = (trip.depart - start_dt).total_seconds()
 			else:
@@ -90,7 +93,10 @@ class OD(object):
 		for trips in [self.sched_trips,self.retro_trips]:
 			to_remove = []
 			for i, trip in enumerate(trips):
-				if trip.arrive.time() > config.end or trip.depart.time() < config.start:
+				if ( 
+					trip.arrive.time() > config.window_end_time or 
+					trip.depart.time() < config.window_start_time 
+				):
 					to_remove.append(i)
 			for i in reversed(to_remove):
 				del trips[i]
