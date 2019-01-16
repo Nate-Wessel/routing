@@ -14,3 +14,6 @@ end = dt.time(22,0,0) # h,m,s;  10:00pm
 
 # (http://dev.opentripplanner.org/apidoc/1.0.0/resource_PlannerResource.html)
 walk_speed = 1.34112 # 3mph in meters per second 
+
+# DB connection details
+DB_conn = "host='localhost' dbname='routing' user='nate' password='mink'" 

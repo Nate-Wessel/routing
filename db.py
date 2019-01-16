@@ -1,12 +1,9 @@
 # functions involving BD interaction
 import psycopg2
-import trip
+import trip, config
 
 # connect and establish a cursor, based on parameters in conf.py
-conn_string = (
-	"host='localhost' dbname='routing' user='nate' password='mink'" )
-connection = psycopg2.connect(conn_string)
-connection.autocommit = True
+connection = psycopg2.connect(config.DB_conn)
 
 def cursor():
 	"""provide a cursor"""
