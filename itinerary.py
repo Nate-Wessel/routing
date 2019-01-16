@@ -49,14 +49,17 @@ class Itinerary(object):
 	def o_stops(self):
 		"""Return an ordered list of origin stops"""
 		return [ s['stop1'] for s in self.segments ]
+
 	@property
 	def d_stops(self):
 		"""Return an ordered list of origin stops"""
 		return [ s['stop2'] for s in self.segments ]
+
 	@property
 	def routes(self):
 		"""Return an ordered list of routes used"""
 		return [ s['route'] for s in self.segments ]
+
 	@property
 	def collapsed_routes(self):
 		"""Same as routes, but collapses any identical subsequent routes."""
@@ -69,6 +72,7 @@ class Itinerary(object):
 				if i > 0 and route != all_routes[i-1]:
 					cleaned_routes.append(route)
 			return cleaned_routes
+
 	@property
 	def walk_distance(self):
 		"""Return the total walking distance in meters"""
