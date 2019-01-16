@@ -33,9 +33,11 @@ class Itinerary(object):
 		return self.original
 
 	def __eq__(self,other):
+		"""Compares the original string that defines this object."""
 		return self.original == other.original
 
 	def __hash__(self):
+		"""Same as above, identical itinerary strings are equal."""
 		return hash(self.original)
 
 	@property
