@@ -1,5 +1,4 @@
 from datetime import datetime as dt
-from pytz import timezone
 import db, config
 from itinerary import Itinerary
 
