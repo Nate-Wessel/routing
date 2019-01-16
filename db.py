@@ -1,5 +1,6 @@
 # functions involving BD interaction
 import psycopg2
+import trip
 
 # connect and establish a cursor, based on parameters in conf.py
 conn_string = (
@@ -106,4 +107,9 @@ def all_itinerary_trips(itin):
 			'final_depth':len(itin.segments)
 		}
 	)
-	return c.fetchall()
+	trips = []
+	for depart, arrive in c.fetchall():
+		trips.append( trip.Trip(depart,arrive,itin) )
+	return trips
+
+
