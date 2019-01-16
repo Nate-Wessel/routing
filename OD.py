@@ -2,15 +2,7 @@ from trip import Trip
 import os, csv
 import datetime as dt
 from math import log
-from pytz import timezone
-import db
-input_dir = '/home/nate/dissdata/routing/'
-
-# define time window to clip to 
-start = dt.time(6,30,0) # h,m,s; 6:30am
-end = dt.time(22,0,0) # h,m,s;  10:00pm
-
-EST = timezone('America/Toronto')
+import config, db
 
 class OD(object):
 	"""An O->D pair"""
@@ -59,8 +51,8 @@ class OD(object):
 				# trip is first of the day
 				dates_seen |= {trip.depart.date()}
 				# create a localized datetime 
-				start_dt = dt.datetime.combine(trip.depart.date(), start)
-				start_dt = EST.localize( start_dt )
+				start_dt = dt.datetime.combine(trip.depart.date(), config.start)
+				start_dt = config.tz.localize( start_dt )
 				from_prev = (trip.depart - start_dt).total_seconds()
 			else:
 				# trip follows previous trip on this day 
@@ -84,7 +76,7 @@ class OD(object):
 			directories = ['17476','17477','17478','17479','17480']
 		trips = []
 		for d in directories:
-			csvpath = input_dir+d+'/'+str(self.orig)+'/'+str(self.dest)+'.csv'
+			csvpath = config.input_dir+d+'/'+str(self.orig)+'/'+str(self.dest)+'.csv'
 			if not os.path.exists(csvpath): continue			
 			with open(csvpath) as f:
 				reader = csv.DictReader(f)	
@@ -98,7 +90,7 @@ class OD(object):
 		for trips in [self.sched_trips,self.retro_trips]:
 			to_remove = []
 			for i, trip in enumerate(trips):
-				if trip.arrive.time() > end or trip.depart.time() < start:
+				if trip.arrive.time() > config.end or trip.depart.time() < config.start:
 					to_remove.append(i)
 			for i in reversed(to_remove):
 				del trips[i]
@@ -120,7 +112,7 @@ class OD(object):
 						trips.pop(i)
 						continue
 				fully_sorted = True 
-			print('\t',starting_length - len(trips),'suboptimal trips removed')
+			#print('\t',starting_length - len(trips),'suboptimal trips removed')
 		
 	def summarize_itineraries(self,trips):
 		"""proportions of fastest trip itineraries"""
@@ -140,6 +132,21 @@ class OD(object):
 		# and sort by prob, highest first
 		itins = sorted(itins, key=lambda k: k['prob'],reverse=True) 
 		return itins
+
+	def access(self,kind='habitual'):
+		"""return a vector of minutely travel times based on the given 
+		accessibility metric"""
+		if kind in ['habitual','h','H']:
+			# route choice is based on whatever is generally the best
+			# no deviation from that route
+			if not self.retro_itin(0).is_walking: # don't look up a walking trip
+				trips = db.all_itinerary_trips(self.retro_itin(0))
+				return trips
+			else:
+				return []
+		else: 
+			print('invalid access type supplied')
+			assert False
 
 	# here be some simplifying properties/methods
 	

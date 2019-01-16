@@ -1,11 +1,7 @@
 from datetime import datetime as dt
 from pytz import timezone
-EST = timezone('America/Toronto')
-import db
+import db, config
 from itinerary import Itinerary
-
-walk_speed = 1.34112 # 3mph in meters per second 
-# (http://dev.opentripplanner.org/apidoc/1.0.0/resource_PlannerResource.html)
 
 class Trip(object):
 	"""one shortest trip"""
@@ -14,15 +10,15 @@ class Trip(object):
 		self.depart_ts = float(depart)
 		self.arrive_ts = float(arrive)
 		# localized datetime's
-		self.depart = EST.localize( dt.fromtimestamp( self.depart_ts ) )
-		self.arrive = EST.localize( dt.fromtimestamp( self.arrive_ts ) )
-		# 
-		self.itinerary = Itinerary(itin) # string from otp script
+		self.depart = config.tz.localize( dt.fromtimestamp( self.depart_ts ) )
+		self.arrive = config.tz.localize( dt.fromtimestamp( self.arrive_ts ) )
+		# itin can either be an Itinerary object or a string (from OTP script)
+		self.itinerary = itin if type(itin) == Itinerary else  Itinerary(itin)
 		self.time_before = 0 # time from previous fastest trip
 
 	def __repr__(self):
 		"""just print the departure time"""
-		return str( self.local_time('d') )
+		return str( self.depart.time() )
 
 	@property
 	def duration(self):
@@ -41,7 +37,7 @@ class Trip(object):
 			( time, route_id ) = db.o2d_at( 
 				step['stop1'], 
 				step['stop2'], 
-				time + step['walk']/walk_speed
+				time + step['walk']/config.walk_speed
 			)
 			# make sure we got some result
 			if not route_id:
@@ -50,7 +46,7 @@ class Trip(object):
 			if route_id != expected_route:
 				print('\tdifferent route used:',route_id,'but expected',expected_route)
 		# add time for walking to the final destination
-		time += self.itinerary.final_walk / walk_speed
+		time += self.itinerary.final_walk / config.walk_speed
 		diff_pct = (time-self.arrive_ts) / (self.arrive_ts-self.depart_ts)
 		print('\t{:+.2%}'.format(diff_pct) , self.itinerary.original )
 

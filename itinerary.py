@@ -1,5 +1,3 @@
-# miscelaneous functions 
-
 class Itinerary(object):
 	"""represents a distinct way of getting from A to B - a route strategy."""
 
@@ -39,6 +37,11 @@ class Itinerary(object):
 
 	def __hash__(self):
 		return hash(self.original)
+
+	@property
+	def is_walking(self):
+		"""is this just a walking itinerary with no transit?"""
+		return len(self.segments) == 0
 
 	@property
 	def o_stops(self):
