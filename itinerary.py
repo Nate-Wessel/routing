@@ -1,9 +1,9 @@
 class Itinerary(object):
-	"""represents a distinct way of getting from A to B - a route strategy."""
+	"""Represents a distinct way of getting from A to B - a route strategy."""
 
 	def __init__(self,itinerary):
-		"""Parse an itinerary from get-itineraries.py. 
-		e.g. '{w28,s2773,r45,s2859,w42,s3280,r300,s7168,w36}' """
+		"""Parse an itinerary from get-itineraries.py,
+		e.g. '{w28,s2773,r45,s2859,w42,s3280,r300,s7168,w36}'."""
 		self.walk_speed = 2 # meters / second
 		self.original = itinerary
 		self.segments = [] # segment starts with walking to a stop, ends at a stop
@@ -29,7 +29,7 @@ class Itinerary(object):
 			} )
 
 	def __repr__(self):
-		"""just the original itinerary string used to coonstruct the object"""
+		"""The original itinerary string used to construct the object"""
 		return self.original
 
 	def __eq__(self,other):
@@ -40,25 +40,24 @@ class Itinerary(object):
 
 	@property
 	def is_walking(self):
-		"""is this just a walking itinerary with no transit?"""
+		"""Is this just a walking itinerary with no transit?"""
 		return len(self.segments) == 0
 
 	@property
 	def o_stops(self):
-		"""return an ordered list of origin stops"""
+		"""Return an ordered list of origin stops"""
 		return [ s['stop1'] for s in self.segments ]
 	@property
 	def d_stops(self):
-		"""return an ordered list of origin stops"""
+		"""Return an ordered list of origin stops"""
 		return [ s['stop2'] for s in self.segments ]
 	@property
 	def routes(self):
-		"""return an ordered list of routes used"""
+		"""Return an ordered list of routes used"""
 		return [ s['route'] for s in self.segments ]
 	@property
 	def collapsed_routes(self):
-		"""sames as routes, but collapses any identical subsequent routes
-		TODO check this works"""
+		"""Same as routes, but collapses any identical subsequent routes."""
 		all_routes = self.routes
 		if len(all_routes) <= 1 or len(all_routes) == len(set(all_routes)):
 			return all_routes
@@ -70,5 +69,6 @@ class Itinerary(object):
 			return cleaned_routes
 	@property
 	def walk_distance(self):
-		"""return the total walking distance in meters"""
+		"""Return the total walking distance in meters"""
 		return sum( [ s['walk'] for s in self.segments ] ) + self.final_walk
+
