@@ -1,8 +1,9 @@
 from trip import Trip
-import os, csv
+import os, csv, time
 import datetime as dt
 from math import log
 import config, db
+from misc import clip_trips_to_window, remove_premature_departures
 
 class OD(object):
 	"""An O->D pair"""
@@ -84,38 +85,9 @@ class OD(object):
 					[ Trip(r['depart'],r['arrive'],r['itinerary']) for r in reader ]
 				)
 		# we now have all the data from the files but need to clean it
-		self.clip_trips_to_window(trips)
-		self.remove_premature_departures(trips)
+		clip_trips_to_window(trips)
+		remove_premature_departures(trips)
 		return trips
-
-	def clip_trips_to_window(self,trips):
-		"""Remove trips outside a defined time window (set in config.py)."""
-		to_remove = []
-		for i, trip in enumerate(trips):
-			if ( 
-				trip.arrive.time() > config.window_end_time or 
-				trip.depart.time() < config.window_start_time 
-			):
-				to_remove.append(i)
-		for i in reversed(to_remove):
-			del trips[i]
-		#print('\t',len(to_remove),'trips removed from window')
-
-	def remove_premature_departures(self,trips):
-		"""If a trip departs earlier but gets in later than another trip it is 
-		suboptimal and needs to be removed."""
-		starting_length = len(trips)
-		# Sort by arrival, then search for trips not also sorted by departure
-		trips.sort(key = lambda x: x.arrive_ts) # arrival, first to last
-		fully_sorted = False # starting assumption
-		while not fully_sorted:
-			for i, trip in enumerate(trips):
-				# if departure is before that of earlier-arriving trip
-				if i > 0 and trip.depart_ts <= trips[i-1].depart_ts:
-					trips.pop(i)
-					continue
-			fully_sorted = True 
-		#print('\t',starting_length - len(trips),'suboptimal trips removed')
 		
 	def summarize_itineraries(self,trips):
 		"""proportions of fastest trip itineraries"""
@@ -144,6 +116,7 @@ class OD(object):
 			# no deviation from that route
 			if not self.retro_itin(0).is_walking: # don't look up a walking trip
 				trips = db.all_itinerary_trips(self.retro_itin(0))
+				clip_trips_to_window(trips)
 				return trips
 			else:
 				return []
