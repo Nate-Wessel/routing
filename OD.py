@@ -4,6 +4,7 @@ import datetime as dt
 from math import log
 import config, db
 from misc import clip_trips_to_window, remove_premature_departures
+from itinerary import Itinerary
 
 class OD(object):
 	"""An O->D pair"""
@@ -90,23 +91,30 @@ class OD(object):
 		return trips
 		
 	def summarize_itineraries(self,trips):
-		"""proportions of fastest trip itineraries"""
-		# get distinct itineraries
-		itins = set([trip.itinerary for trip in trips])
+		"""Returns a list of itineraries sorted by prominence. Total time within 
+		the time window spent as optimal next trip is assigned to itineraries as 
+		a property."""
+		# get a set of distinct itinerary objects
+		unique_itins = set([trip.itinerary for trip in trips])
 		# put this in a dict with initial counts
-		itins = { key:{'itin':key,'time':0,'count':0} for key in itins }
+		counter = { it:{'time':0,'count':0} for it in unique_itins }
 		# add times from trips to each 
 		for trip in trips:
-			itins[trip.itinerary]['time'] += trip.time_before
-			itins[trip.itinerary]['count'] += 1
-		# change format from dict to list of dicts
-		itins = [ itins[i] for i in itins ]
+			counter[trip.itinerary]['time'] += trip.time_before
+			counter[trip.itinerary]['count'] += 1
+		# for each itinerary and it's counts
+		for it in counter:
+			it.time = counter[it]['time']
+			it.count = counter[it]['count']
+		# we now reconstruct this from the dict as a list of itineraries
+		unique_itins =  [ it for it in counter ]
+		# get total time in trips
+		total_time = sum( [ it.time for it in unique_itins ] )
 		# assign probabilities based on share of total time
-		total_time = sum( [ i['time'] for i in itins ] )
-		for i in itins: i['prob'] = i['time'] / total_time
+		for it in unique_itins:
+			it.prob = it.time / total_time
 		# and sort by prob, highest first
-		itins = sorted(itins, key=lambda k: k['prob'],reverse=True) 
-		return itins
+		return sorted( unique_itins, key=lambda k: k.prob, reverse=True )
 
 	def access(self,kind='habitual'):
 		"""return a vector of minutely travel times based on the given 
@@ -137,10 +145,10 @@ class OD(object):
 
 	def sched_itin(self,i):
 		"""scheduled itinerary at the given index if any"""
-		return self.sched_itins[i]['itin'] if i < len(self.sched_itins) else ''
+		return self.sched_itins[i] if i < len(self.sched_itins) else None
 	def retro_itin(self,i):
 		"""scheduled itinerary at the given index if any"""
-		return self.retro_itins[i]['itin'] if i < len(self.retro_itins) else ''
+		return self.retro_itins[i] if i < len(self.retro_itins) else None
 
 	def sched_itin_p(self,i):
 		"""scheduled itinerary probability at the given index if any"""

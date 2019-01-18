@@ -27,6 +27,10 @@ class Itinerary(object):
 			self.segments.append( {
 				'walk':walk, 'stop1':stop1, 'stop2':stop2, 'route':route
 			} )
+		# these are used for summarizing itineraries only
+		self.time = 0
+		self.count = 0
+		self.prob = 0
 
 	def __repr__(self):
 		"""The original itinerary string used to construct the object"""
