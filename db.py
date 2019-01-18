@@ -66,7 +66,9 @@ def all_itinerary_trips(itin):
 					WHERE 
 						st1.stop_uid = (%(o_stops)s)[1] AND
 						st2.stop_uid = (%(d_stops)s)[1] AND
-						st1.stop_sequence < st2.stop_sequence
+						st1.stop_sequence < st2.stop_sequence AND
+						-- departure is within time window
+						st1.local_time BETWEEN %(window_start)s::time AND %(window_end)s::time
 						
 				UNION
 				
@@ -101,7 +103,9 @@ def all_itinerary_trips(itin):
 		""", { 
 			'o_stops':itin.o_stops,
 			'd_stops':itin.d_stops,
-			'final_depth':len(itin.segments)
+			'final_depth':len(itin.segments),
+			'window_start':str(config.window_start_time),
+			'window_end':str(config.window_end_time)
 		}
 	)
 	trips = []
