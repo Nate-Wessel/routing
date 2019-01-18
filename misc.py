@@ -28,3 +28,29 @@ def remove_premature_departures(trips):
 				continue
 		fully_sorted = True 
 	#print('\t',starting_length - len(trips),'suboptimal trips removed')
+
+def summarize_itineraries(trips):
+	"""Returns a list of itineraries sorted by prominence. Total time within 
+	the time window spent as optimal next trip is assigned to itineraries as 
+	a property."""
+	# get a set of distinct itinerary objects
+	unique_itins = set([trip.itinerary for trip in trips])
+	# put this in a dict with initial counts
+	counter = { it:{'time':0,'count':0} for it in unique_itins }
+	# add times from trips to each 
+	for trip in trips:
+		counter[trip.itinerary]['time'] += trip.time_before
+		counter[trip.itinerary]['count'] += 1
+	# for each itinerary and it's counts
+	for it in counter:
+		it.time = counter[it]['time']
+		it.count = counter[it]['count']
+	# we now reconstruct this from the dict as a list of itineraries
+	unique_itins =  [ it for it in counter ]
+	# get total time in trips
+	total_time = sum( [ it.time for it in unique_itins ] )
+	# assign probabilities based on share of total time
+	for it in unique_itins:
+		it.prob = it.time / total_time
+	# and sort by prob, highest first
+	return sorted( unique_itins, key=lambda k: k.prob, reverse=True )

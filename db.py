@@ -46,6 +46,9 @@ def o2d_at(o_stop,d_stop,departure_unix_time):
 
 def all_itinerary_trips(itin):
 	"""Get all trips conforming to a given Itinerary (object instance)"""
+	# if that itinerary is just walking, return nothing
+	if itin.is_walking: 
+		return []
 	# query can take more than a second
 	c = cursor()
 	c.execute(
