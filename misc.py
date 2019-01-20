@@ -1,4 +1,39 @@
 import config
+from datetime import datetime, timedelta
+import pytz
+
+# ACCESS FUNCTIONS
+
+def cum(time,theta=30):
+	"""cumulative accessibility function"""
+	return 0 if time < theta else 1
+
+# MANIPULATION OF TRIP VECTORS
+
+def trips2times(trips):
+	"""Take a vector of trips and return a vector of sampled travel times
+	with values in minutes."""
+	travel_times = []
+	# ensure trips are sorted by departure, ASC
+	trips.sort(key = lambda x: x.depart_ts)
+	# first only look at days where there is data
+	for day in sorted(list(set([ trip.depart.date() for trip in trips ]))):
+		# times from start of window on day to end of window 
+		time = config.tz.localize( datetime.combine( 
+			day, config.window_start_time ) )
+		end_time = config.tz.localize( datetime.combine( 
+			day, config.window_end_time ) )
+		# iterate over minutes looking for arrival of next-departing trip
+		i = 0
+		while time < end_time and i < len(trips)-1:
+			# While this trip departs in the past and i is still in range
+			while i < len(trips)-1 and trips[i].depart <= time: 
+				i += 1
+			td = trips[i].arrive - time
+			travel_times.append( td )
+			time += timedelta(minutes=1)
+	return travel_times
+		
 
 def clip_trips_to_window(trips):
 	"""Remove trips outside a defined time window (set in config.py)."""
