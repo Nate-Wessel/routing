@@ -5,6 +5,7 @@ from math import log
 import config, db
 from misc import *
 from itinerary import Itinerary
+from statistics import mean
 
 class OD(object):
 	"""An O->D pair"""
@@ -102,8 +103,8 @@ class OD(object):
 				# this trip involves transit and we need to look up trips in the DB
 				trips = db.all_itinerary_trips(learned_itin)
 				clip_trips_to_window(trips)
-				trips2times(trips)
-				return trips
+				times = trips2times(trips)
+				return mean( [ cum(time) for time in times ] ), len(times)
 		else: 
 			print('invalid access type supplied')
 			assert False

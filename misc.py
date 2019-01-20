@@ -4,9 +4,10 @@ import pytz
 
 # ACCESS FUNCTIONS
 
-def cum(time,theta=30):
-	"""cumulative accessibility function"""
-	return 0 if time < theta else 1
+def cum(td,theta=30):
+	"""Cumulative accessibility function. Accepts a timedelta and returns a 
+	binary measure. Theta is in minutes."""
+	return 0 if td.total_seconds()/60. < theta else 1
 
 # MANIPULATION OF TRIP VECTORS
 
@@ -16,7 +17,7 @@ def trips2times(trips):
 	travel_times = []
 	# ensure trips are sorted by departure, ASC
 	trips.sort(key = lambda x: x.depart_ts)
-	# first only look at days where there is data
+	# first only look at days (dates) where there is data
 	for day in sorted(list(set([ trip.depart.date() for trip in trips ]))):
 		# times from start of window on day to end of window 
 		time = config.tz.localize( datetime.combine( 
