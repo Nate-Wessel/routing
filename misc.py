@@ -2,13 +2,6 @@ import config
 from datetime import datetime, timedelta
 import pytz
 
-# ACCESS FUNCTIONS
-
-def cum(td,theta=30):
-	"""Cumulative accessibility function. Accepts a timedelta and returns a 
-	binary measure. Theta is in minutes."""
-	return 0 if td.total_seconds()/60. < theta else 1
-
 # MANIPULATION OF TRIP VECTORS
 
 def trips2times(trips):

@@ -2,7 +2,7 @@ from trip import Trip
 import os, csv, time
 from datetime import datetime as dt
 from math import log
-import config, db
+import config, db, impedance
 from misc import *
 from itinerary import Itinerary
 from statistics import mean
@@ -104,7 +104,8 @@ class OD(object):
 				trips = db.all_itinerary_trips(learned_itin)
 				clip_trips_to_window(trips)
 				times = trips2times(trips)
-				return mean( [ cum(time) for time in times ] ), len(times)
+				print(len(times),'times used')
+				return mean( [ impedance.negexp(time) for time in times ] )
 		else: 
 			print('invalid access type supplied')
 			assert False
