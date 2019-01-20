@@ -30,13 +30,19 @@ def trips2times(trips):
 		
 
 def clip_trips_to_window(trips):
-	"""Remove trips outside a defined time window (set in config.py)."""
+	"""Remove trips departing outside a defined time window 
+	(set in config.py)."""
 	to_remove = []
 	for i, trip in enumerate(trips):
-		if ( 
-			trip.arrive.time() > config.window_end_time or 
-			trip.depart.time() < config.window_start_time 
-		):
+		if ( # checking for GOOD trips 
+			# departs inside window
+			config.window_start_time < trip.depart.time() < config.window_end_time 
+			# and departs within date range
+			and trip.depart.date() >= config.window_start_date
+			and trip.depart.date() <= config.window_end_date 
+		): 
+			pass
+		else:
 			to_remove.append(i)
 	for i in reversed(to_remove):
 		del trips[i]
