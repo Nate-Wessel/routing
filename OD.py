@@ -1,9 +1,9 @@
 from trip import Trip
 import os, csv, time
-import datetime as dt
+from datetime import datetime as dt
 from math import log
 import config, db
-from misc import clip_trips_to_window, remove_premature_departures, summarize_itineraries
+from misc import *
 from itinerary import Itinerary
 
 class OD(object):
@@ -50,11 +50,10 @@ class OD(object):
 				# trip is first of the day
 				dates_seen |= {trip.depart.date()}
 				# create a localized datetime 
-				start_dt = dt.datetime.combine(
+				start_dt = dt.combine(
 					trip.depart.date(), 
 					config.window_start_time
 				)
-				start_dt = config.tz.localize( start_dt )
 				from_prev = (trip.depart - start_dt).total_seconds()
 			else:
 				# trip follows previous trip on this day 
@@ -91,17 +90,21 @@ class OD(object):
 		return trips
 
 	def access(self,kind='habitual'):
-		"""return a vector of minutely travel times based on the given 
-		accessibility metric"""
+		"""Return an average access score based on the given accessibility 
+		metric"""
 		if kind in ['habitual','h','H']:
-			# route choice is based on whatever is generally the best
-			# no deviation from that route
-			if not self.retro_itin(0).is_walking: # don't look up a walking trip
-				trips = db.all_itinerary_trips(self.retro_itin(0))
-				clip_trips_to_window(trips)
-				return trips
+			# route choice is based on whatever is generally the best from 
+			# experience with no deviation from that route
+			learned_itin = self.retro_itin(0)
+			if learned_itin.is_walking:
+				# don't look up a walking trip - we already know the travel time
+				return cum( learned_itin.walk_distance / config.walk_speed )
 			else:
-				return []
+				# this trip involves transit and we need to look up trips in the DB
+				trips = db.all_itinerary_trips(learned_itin)
+				clip_trips_to_window(trips)
+				trips2times(trips)
+				return trips
 		else: 
 			print('invalid access type supplied')
 			assert False
