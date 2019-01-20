@@ -50,10 +50,9 @@ class OD(object):
 				# trip is first of the day
 				dates_seen |= {trip.depart.date()}
 				# create a localized datetime 
-				start_dt = dt.combine(
-					trip.depart.date(), 
-					config.window_start_time
-				)
+				start_dt = config.tz.localize( dt.combine(
+					trip.depart.date(), config.window_start_time
+				) )
 				from_prev = (trip.depart - start_dt).total_seconds()
 			else:
 				# trip follows previous trip on this day 

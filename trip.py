@@ -1,6 +1,7 @@
 from datetime import datetime as dt
 import db, config
 from itinerary import Itinerary
+import pytz
 
 class Trip(object):
 	"""one shortest trip"""
@@ -9,8 +10,12 @@ class Trip(object):
 		self.depart_ts = float(depart)
 		self.arrive_ts = float(arrive)
 		# localized datetime's
-		self.depart = config.tz.localize( dt.fromtimestamp( self.depart_ts ) )
-		self.arrive = config.tz.localize( dt.fromtimestamp( self.arrive_ts ) )
+		self.depart = pytz.utc.localize( 
+			dt.utcfromtimestamp(self.depart_ts) 
+		).astimezone(config.tz)
+		self.arrive = pytz.utc.localize( 
+			dt.utcfromtimestamp(self.arrive_ts) 
+		).astimezone(config.tz)
 		# itin can either be an Itinerary object or a string (from OTP script)
 		self.itinerary = itin if type(itin) == Itinerary else  Itinerary(itin)
 		self.time_before = 0 # time from previous fastest trip
