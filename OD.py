@@ -108,7 +108,6 @@ class OD(object):
 				trips = db.all_itinerary_trips(learned_itin)
 				clip_trips_to_window(trips)
 				times = trips2times(trips)
-				print(len(times),'times used')
 				return mean( [ impedance.negexp(time) for time in times ] )
 		elif kind in ['any_plausible','any','a']:
 			# any route getting optimality 5%+ of the time can be used optimally
@@ -124,7 +123,6 @@ class OD(object):
 				all_possible_trips.extend(trips)
 			clip_trips_to_window(all_possible_trips)
 			times = trips2times(all_possible_trips)
-			print(len(times),'times used')
 			return mean( [ impedance.negexp(time) for time in times ] )
 		else: 
 			print('invalid access type supplied')
