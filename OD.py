@@ -1,6 +1,6 @@
 from trip import Trip
 import os, csv, time
-from datetime import datetime as dt
+from datetime import datetime, timedelta
 from math import log
 import config, db, impedance
 from misc import *
@@ -51,7 +51,7 @@ class OD(object):
 				# trip is first of the day
 				dates_seen |= {trip.depart.date()}
 				# create a localized datetime 
-				start_dt = config.tz.localize( dt.combine(
+				start_dt = config.tz.localize( datetime.combine(
 					trip.depart.date(), config.window_start_time
 				) )
 				from_prev = (trip.depart - start_dt).total_seconds()
@@ -97,8 +97,11 @@ class OD(object):
 			# experience with no deviation from that route
 			learned_itin = self.retro_itin(0)
 			if learned_itin.is_walking:
+				print('walking time used')
 				# don't look up a walking trip - we already know the travel time
-				return cum( learned_itin.walk_distance / config.walk_speed )
+				seconds_walking = learned_itin.walk_distance / config.walk_speed
+				walk_time = timedelta(seconds=seconds_walking)
+				return impedance.negexp( walk_time )
 			else:
 				# this trip involves transit and we need to look up trips in the DB
 				trips = db.all_itinerary_trips(learned_itin)
