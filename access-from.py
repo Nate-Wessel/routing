@@ -10,16 +10,17 @@ def access(origin):
 		dests = [ int(r['uid']) for r in reader if int(r['uid']) != origin ]
 	
 	with open('data/test-access.csv','w+',buffering=1) as outfile:
-		outfile.write('o,d,Ah,Aa,plausible')
+		outfile.write('o,d,ah,aa,plaus_itins,entropy')
 		for dest in dests:
 			print(dest)
 			od = OD(origin,dest)
 			Ah = od.access('habitual')
 			Aa = od.access('any_plausible')
-			outfile.write('\n{},{},{},{},{}'.format(
+			outfile.write('\n{},{},{},{},{},{}'.format(
 				origin,dest,
 				Ah,Aa,
-				len(od.alter_itins)
+				len(od.alter_itins),
+				od.retro_entropy
 			) )
 
 # simple function call to start with 
