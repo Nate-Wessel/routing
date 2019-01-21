@@ -4,9 +4,10 @@ import pytz
 
 # MANIPULATION OF TRIP VECTORS
 
-def trips2times(trips):
+def trips2times(trips,upper_bound=None):
 	"""Take a vector of trips and return a vector of sampled travel times
-	with values in minutes."""
+	with values in minutes. Upper bound is used for limiting times by e.g. a 
+	worst case walking option"""
 	travel_times = []
 	# ensure trips are sorted by departure, ASC
 	trips.sort(key = lambda x: x.depart_ts)
@@ -24,6 +25,8 @@ def trips2times(trips):
 			while i < len(trips)-1 and trips[i].depart <= time: 
 				i += 1
 			td = trips[i].arrive - time
+			if upper_bound and td > upper_bound:
+				td = upper_bound
 			travel_times.append( td )
 			time += timedelta(minutes=1)
 	return travel_times
