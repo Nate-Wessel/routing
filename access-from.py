@@ -9,14 +9,18 @@ def access(origin):
 		reader = csv.DictReader(f)
 		dests = [ int(r['uid']) for r in reader if int(r['uid']) != origin ]
 	
-	with open('data/test-access.csv','w+') as outfile:
-		outfile.write('o,d,access')
+	with open('data/test-access.csv','w+',buffering=1) as outfile:
+		outfile.write('o,d,Ah,Aa,plausible')
 		for dest in dests:
 			print(dest)
 			od = OD(origin,dest)
-			a = od.access('h')
-			outfile.write('\n'+str(origin)+','+str(dest)+','+str(a))
-
+			Ah = od.access('habitual')
+			Aa = od.access('any_plausible')
+			outfile.write('\n{},{},{},{},{}'.format(
+				origin,dest,
+				Ah,Aa,
+				len(od.alter_itins)
+			) )
 
 # simple function call to start with 
 access(12)

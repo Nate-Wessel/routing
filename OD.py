@@ -35,10 +35,11 @@ class OD(object):
 			retro += 'It:{}'.format( self.retro_itin(i) ) 
 		return( name + sched + retro )
 
-	def get_alt_trips(self):
-		"""testing..."""
-		# get top three retro itineraries
-		pass
+	@property
+	def alter_itins(self):
+		"""Return a list of itineraries where each is optimal at least 5% of the 
+		time."""
+		return [ itin for itin in self.retro_itins if itin.prob >= 0.05 ]
 
 	def allocate_time(self,trips):
 		"""Allocate the time (in seconds) for which this trip is the next, 
@@ -64,7 +65,7 @@ class OD(object):
 		"""shannon entropy of the itinerary probability distribution"""
 		entropy = 0
 		for itin in itineraries:
-			entropy += itin['prob'] * log(itin['prob'],2)
+			entropy += itin.prob * log(itin.prob,2)
 		return - entropy
 
 	def get_trips_from_file(self,dataset):
@@ -109,6 +110,22 @@ class OD(object):
 				times = trips2times(trips)
 				print(len(times),'times used')
 				return mean( [ impedance.negexp(time) for time in times ] )
+		elif kind in ['any_plausible','any','a']:
+			# any route getting optimality 5%+ of the time can be used optimally
+			all_possible_trips = []
+			for plausible_itin in self.alter_itins:
+				if plausible_itin.is_walking:
+					print('walking time used')
+					# don't look up a walking trip - we already know the travel time
+					seconds_walking = plausible_itin.walk_distance / config.walk_speed
+					walk_time = timedelta(seconds=seconds_walking)
+					return impedance.negexp( walk_time )
+				trips = db.all_itinerary_trips(plausible_itin)
+				all_possible_trips.extend(trips)
+			clip_trips_to_window(all_possible_trips)
+			times = trips2times(all_possible_trips)
+			print(len(times),'times used')
+			return mean( [ impedance.negexp(time) for time in times ] )
 		else: 
 			print('invalid access type supplied')
 			assert False
@@ -133,9 +150,9 @@ class OD(object):
 
 	def sched_itin_p(self,i):
 		"""scheduled itinerary probability at the given index if any"""
-		return self.sched_itins[i]['prob'] if i < len(self.sched_itins) else 0
+		return self.sched_itins[i].prob if i < len(self.sched_itins) else 0
 	def retro_itin_p(self,i):
 		"""scheduled itinerary probability at the given index if any"""
-		return self.retro_itins[i]['prob'] if i < len(self.retro_itins) else 0
+		return self.retro_itins[i].prob if i < len(self.retro_itins) else 0
 	
 
