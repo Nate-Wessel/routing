@@ -26,8 +26,8 @@ class Trip(object):
 
 	@property
 	def duration(self):
-		"""length of trip in minutes"""
-		return ( self.arrive_ts - self.depart_ts ) / 60.0
+		"""duration of trip as timedelta"""
+		return self.arrive - self.depart
 
 	def verify(self):
 		"""Try to verify that this trip, or something close to it, exists in the 
