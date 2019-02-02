@@ -28,18 +28,21 @@ class OD(object):
 			round(self.sched_entropy,2), len(self.sched_trips) )
 		retro = '\n\tretro | entropy:{} | trips:{}'.format( 
 			round(self.retro_entropy,2), len(self.retro_trips) )
-		for i in [0,1,2]:
-			sched += '\n\t\tPr:{}, '.format( round(self.sched_itin_p(i),3) )
-			retro += '\n\t\tPr:{}, '.format( round(self.retro_itin_p(i),3) )
-			sched += 'It:{}'.format( self.sched_itin(i) )
-			retro += 'It:{}'.format( self.retro_itin(i) ) 
+		for itin in self.alter_itins():
+			retro += '\n\t\tPr:{}, '.format( round(itin.prob,2) )
+			retro += 'It:{}'.format( itin ) 
+		for itin in self.alter_itins('sched'):
+			sched += '\n\t\tPr:{}, '.format( round(itin.prob,2) )
+			sched += 'It:{}'.format( itin )
 		return( name + sched + retro )
 
-	@property
-	def alter_itins(self):
+	def alter_itins(self,kind='retro'):
 		"""Return a list of itineraries where each is optimal at least 5% of the 
 		time."""
-		return [ itin for itin in self.retro_itins if itin.prob >= 0.05 ]
+		if kind == 'retro':
+			return [ itin for itin in self.retro_itins if itin.prob >= 0.05 ]
+		elif kind in ['schedule','sched','s']:
+			return [ itin for itin in self.sched_itins if itin.prob >= 0.05 ]
 
 	def allocate_time(self,trips):
 		"""Allocate the time (in seconds) for which this trip is the next, 
@@ -96,6 +99,7 @@ class OD(object):
 		if kind in ['habitual','h','H']:
 			# route choice is based on whatever is generally the best from 
 			# experience with no deviation from that route
+			# TODO best = minimizes mean travel time
 			learned_itin = self.retro_itin(0)
 			if learned_itin.is_walking:
 				print('walking time used')
@@ -113,7 +117,7 @@ class OD(object):
 			# any route getting optimality 5%+ of the time can be used optimally
 			possible_trips = []
 			walk_option = False
-			for plausible_itin in self.alter_itins:
+			for plausible_itin in self.alter_itins():
 				if plausible_itin.is_walking:
 					walk_option = True
 					# don't look up a walking trip - we already know the travel time
@@ -123,11 +127,11 @@ class OD(object):
 				trips = db.all_itinerary_trips(plausible_itin)
 				possible_trips.extend(trips)
 			# now that we have trips from all itineraries
-			if walk_option and len(self.alter_itins) == 1:
+			if walk_option and len(self.alter_itins()) == 1:
 				return impedance.negexp(walk_time)
 			clip_trips_to_window(possible_trips)
 			remove_premature_departures(possible_trips)
-			if walk_option and len(self.alter_itins) > 1:
+			if walk_option and len(self.alter_itins()) > 1:
 				times = trips2times(possible_trips,walk_time)
 			else:
 				times = trips2times(possible_trips)
@@ -153,12 +157,4 @@ class OD(object):
 	def retro_itin(self,i):
 		"""scheduled itinerary at the given index if any"""
 		return self.retro_itins[i] if i < len(self.retro_itins) else None
-
-	def sched_itin_p(self,i):
-		"""scheduled itinerary probability at the given index if any"""
-		return self.sched_itins[i].prob if i < len(self.sched_itins) else 0
-	def retro_itin_p(self,i):
-		"""scheduled itinerary probability at the given index if any"""
-		return self.retro_itins[i].prob if i < len(self.retro_itins) else 0
-	
 
