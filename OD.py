@@ -97,22 +97,9 @@ class OD(object):
 		"""Return an average access score based on the given accessibility 
 		metric"""
 		if kind in ['habitual','h','H']:
-			# route choice is based on whatever is generally the best from 
-			# experience with no deviation from that route
-			# TODO best = minimizes mean travel time
-			learned_itin = self.retro_itin(0)
-			if learned_itin.is_walking:
-				print('walking time used')
-				# don't look up a walking trip - we already know the travel time
-				seconds_walking = learned_itin.walk_distance / config.walk_speed
-				walk_time = timedelta(seconds=seconds_walking)
-				return impedance.negexp( walk_time )
-			else:
-				# this trip involves transit and we need to look up trips in the DB
-				trips = db.all_itinerary_trips(learned_itin)
-				clip_trips_to_window(trips)
-				times = trips2times(trips)
-				return mean( [ impedance.negexp(time) for time in times ] )
+			# always take the itinerary that results in lowest average travel times
+			times = impedance.habitual_times(self)
+			return mean( [ impedance.negexp(time) for time in times ] )
 		elif kind in ['any_plausible','any','a']:
 			# any route getting optimality 5%+ of the time can be used optimally
 			possible_trips = []
