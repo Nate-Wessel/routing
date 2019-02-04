@@ -9,8 +9,8 @@ input_dir = '/home/nate/dissdata/routing/'
 
 # define time window to clip travel to
 import datetime as dt
-window_start_time = dt.time(6,0,0) # h,m,s 
-window_end_time   = dt.time(9,0,0) # h,m,s
+window_start_time = dt.time(3,0,0) # h,m,s 
+window_end_time   = dt.time(22,0,0) # h,m,s
 # dates limits are inclusive
 window_start_date = dt.date(2017,11,6)
 window_end_date = dt.date(2017,11,10)

@@ -4,7 +4,7 @@ d$jf = d$depart
 # SELECT EXTRACT(epoch from '2017-11-10 20:00:00-05'::timestamptz)
 st = data.table( jf = seq(1509966000,1510362000,by=60) )
 # nov 6th 6am to 8pm EST
-cairo_pdf('~/work-home.pdf',width=10,height=4)
+cairo_pdf('~/Dropbox/diss/routing/paper/figures/12-316.pdf',width=10,height=4)
 	plot(0,type='n',xlim=c(1509966000,1510016400),ylim=c(60,0))
 	ci = 1 # count index
 	letters = c('a','b','c')
