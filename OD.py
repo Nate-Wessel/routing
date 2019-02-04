@@ -101,26 +101,7 @@ class OD(object):
 			return mean( [ impedance.negexp(time) for time in times ] )
 		elif kind in ['any_plausible','any','a']:
 			# any route getting optimality 5%+ of the time can be used optimally
-			possible_trips = []
-			walk_option = False
-			for plausible_itin in self.alter_itins():
-				if plausible_itin.is_walking:
-					walk_option = True
-					# don't look up a walking trip - we already know the travel time
-					seconds_walking = plausible_itin.walk_distance / config.walk_speed
-					walk_time = timedelta(seconds=seconds_walking)
-				# not a walking itinerary
-				trips = db.all_itinerary_trips(plausible_itin)
-				possible_trips.extend(trips)
-			# now that we have trips from all itineraries
-			if walk_option and len(self.alter_itins()) == 1:
-				return impedance.negexp(walk_time)
-			triptools.clip_trips_to_window(possible_trips)
-			triptools.remove_premature_departures(possible_trips)
-			if walk_option and len(self.alter_itins()) > 1:
-				times = triptools.trips2times(possible_trips,walk_time)
-			else:
-				times = triptools.trips2times(possible_trips)
+			times = impedance.route_indifferent_times(self)
 			return mean( [ impedance.negexp(time) for time in times ] )
 		else: 
 			print('invalid access type supplied')

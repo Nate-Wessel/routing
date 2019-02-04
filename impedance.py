@@ -36,8 +36,37 @@ def habitual_times(OD):
 		print('habit itin:',habit_itin)
 		return current_best_times
 
+
+def route_indifferent_times(OD):
+	"""Return a set of sampled travel times which are as fast as possible, and 
+	indifferent to route choice. This is the null hypothesis essentially."""
+	possible_trips = []
+	walk_option = False
+	for plausible_itin in OD.alter_itins():
+		# there should only be <= 1 walk option per OD
+		if plausible_itin.is_walking:
+			walk_option = True
+			# don't look up a walking trip - we already know the travel time
+			seconds_walking = plausible_itin.walk_distance / config.walk_speed
+			walk_time = timedelta(seconds=seconds_walking)
+		# not a walking itinerary
+		trips = db.all_itinerary_trips(plausible_itin)
+		possible_trips.extend(trips)
+	# now that we have trips from all itineraries
+	if walk_option and len(OD.alter_itins()) == 1:
+		return [ walk_time ]
+	triptools.clip_trips_to_window(possible_trips)
+	triptools.remove_premature_departures(possible_trips)
+	if walk_option and len(OD.alter_itins()) > 1:
+		return triptools.trips2times(possible_trips,walk_time)
+	else:
+		return triptools.trips2times(possible_trips)
+
+
 def mtd(td_list):
 	"""Mean TimeDelta"""
 	# convert to seconds, take the mean, return a timedelta
 	sec_list = [ td.total_seconds() for td in td_list ]
 	return dt.timedelta( seconds=(sum(sec_list)/len(td_list)) )
+
+
