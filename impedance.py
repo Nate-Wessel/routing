@@ -1,6 +1,5 @@
 # ACCESS AND IMPEDANCE FUNCTIONS
-import math, config, db
-from misc import *
+import math, config, db, triptools
 import datetime as dt
 
 def cum(td,theta=45):
@@ -28,13 +27,13 @@ def habitual_times(OD):
 		else:
 			# this trip involves transit and we need to look up trips in the DB
 			trips = db.all_itinerary_trips(itin)
-			clip_trips_to_window(trips)
-			times = trips2times(trips)
+			triptools.clip_trips_to_window(trips)
+			times = triptools.trips2times(trips)
 			if mtd(times) <= mtd(current_best_times):
 				current_best_times = times
 				habit_itin = itin
 	if habit_itin:
-		print(habit_itin)
+		print('habit itin:',habit_itin)
 		return current_best_times
 
 def mtd(td_list):

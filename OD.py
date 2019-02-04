@@ -1,9 +1,8 @@
 from trip import Trip
-import os, csv, time
+import os, csv, time, triptools
 from datetime import datetime, timedelta
 from math import log
 import config, db, impedance
-from misc import *
 from itinerary import Itinerary
 from statistics import mean
 
@@ -19,8 +18,8 @@ class OD(object):
 		self.allocate_time(self.sched_trips)
 		self.allocate_time(self.retro_trips)
 		# summarize itinerary data
-		self.sched_itins = summarize_itineraries(self.sched_trips)
-		self.retro_itins = summarize_itineraries(self.retro_trips)
+		self.sched_itins = triptools.summarize_itineraries(self.sched_trips)
+		self.retro_itins = triptools.summarize_itineraries(self.retro_trips)
 
 	def __repr__(self):
 		name = str(self.orig)+' -> '+str(self.dest)
@@ -89,8 +88,8 @@ class OD(object):
 					[ Trip(r['depart'],r['arrive'],r['itinerary']) for r in reader ]
 				)
 		# we now have all the data from the files but need to clean it
-		clip_trips_to_window(trips)
-		remove_premature_departures(trips)
+		triptools.clip_trips_to_window(trips)
+		triptools.remove_premature_departures(trips)
 		return trips
 
 	def access(self,kind='habitual'):
@@ -116,12 +115,12 @@ class OD(object):
 			# now that we have trips from all itineraries
 			if walk_option and len(self.alter_itins()) == 1:
 				return impedance.negexp(walk_time)
-			clip_trips_to_window(possible_trips)
-			remove_premature_departures(possible_trips)
+			triptools.clip_trips_to_window(possible_trips)
+			triptools.remove_premature_departures(possible_trips)
 			if walk_option and len(self.alter_itins()) > 1:
-				times = trips2times(possible_trips,walk_time)
+				times = triptools.trips2times(possible_trips,walk_time)
 			else:
-				times = trips2times(possible_trips)
+				times = triptools.trips2times(possible_trips)
 			return mean( [ impedance.negexp(time) for time in times ] )
 		else: 
 			print('invalid access type supplied')
