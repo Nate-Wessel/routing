@@ -7,8 +7,9 @@ did = 316
 od = OD(oid,did)
 
 print( od )
-print( od.access('habitual') )
-print( od.access('any') )
+print( 'realtime access:', od.access('realtime') )
+print( 'habitual-access:', od.access('habitual') )
+print( 'any access:', od.access('any') )
 
 # get the departures and arrivals for the top three trips
 # and put them in a CSV

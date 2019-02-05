@@ -37,6 +37,32 @@ def habitual_times(OD):
 		return current_best_times
 
 
+def realtime_times(OD):
+	"""Try to minimize initial wait times by taking the next-departing 
+	itinerary. Can potentially walk if nothing coming."""
+	walk_option = False
+	possible_trips = []
+	for itin in OD.alter_itins():
+		if itin.is_walking:
+			walk_option = True
+			# don't look up a walking trip - we already know the travel time
+			seconds_walking = itin.walk_distance / config.walk_speed
+			walk_time = timedelta(seconds=seconds_walking)
+		else:
+			# not a walking itinerary
+			trips = db.all_itinerary_trips(itin)
+			possible_trips.extend(trips)
+	# now that we have trips from all itineraries
+	if walk_option and len(OD.alter_itins()) == 1:
+		return [ walk_time ]
+	triptools.clip_trips_to_window(possible_trips)
+	#triptools.remove_premature_departures(possible_trips)
+	if walk_option and len(OD.alter_itins()) > 1:
+		return triptools.trips2times(possible_trips,walk_time)
+	else:
+		return triptools.trips2times(possible_trips)
+
+
 def route_indifferent_times(OD):
 	"""Return a set of sampled travel times which are as fast as possible, and 
 	indifferent to route choice. This is the null hypothesis essentially."""
@@ -49,9 +75,9 @@ def route_indifferent_times(OD):
 			# don't look up a walking trip - we already know the travel time
 			seconds_walking = plausible_itin.walk_distance / config.walk_speed
 			walk_time = timedelta(seconds=seconds_walking)
-		# not a walking itinerary
-		trips = db.all_itinerary_trips(plausible_itin)
-		possible_trips.extend(trips)
+		else: # not a walking itinerary
+			trips = db.all_itinerary_trips(plausible_itin)
+			possible_trips.extend(trips)
 	# now that we have trips from all itineraries
 	if walk_option and len(OD.alter_itins()) == 1:
 		return [ walk_time ]

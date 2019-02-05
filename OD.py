@@ -103,6 +103,9 @@ class OD(object):
 			# any route getting optimality 5%+ of the time can be used optimally
 			times = impedance.route_indifferent_times(self)
 			return mean( [ impedance.negexp(time) for time in times ] )
+		elif kind in ['realtime','real','rt','r']:
+			times = impedance.realtime_times(self)
+			return mean( [ impedance.negexp(time) for time in times ] )
 		else: 
 			print('invalid access type supplied')
 			assert False
