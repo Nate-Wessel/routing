@@ -7,9 +7,8 @@ class Path:
 		self.walk_speed = 2 # meters / second
 		self.original = path_string
 		self.segments = [] # segment starts with walking to a stop, ends at a stop
-		# remove SQL brackets
-		itinerary = path_string.strip('{}')
-		steps = itinerary.split(',')
+		# remove SQL brackets and break on commas
+		steps = path_string.strip('{}').split(',')
 		# assign length of final walk
 		self.final_walk = int(steps[-1][1:]) if steps[-1][0] == 'w' else 0
 		# iterate over *route* segments, looking forward and back for other data
@@ -29,7 +28,7 @@ class Path:
 			} )
 
 	def __repr__(self):
-		"""The original itinerary string used to construct the object"""
+		"""The original path string used to construct the object"""
 		return self.original
 
 	def __eq__(self,other):
@@ -37,12 +36,12 @@ class Path:
 		return self.original == other.original
 
 	def __hash__(self):
-		"""Same as above, identical itinerary strings are equal."""
+		"""Same as above, identical itinerary/path strings are equal."""
 		return hash(self.original)
 
 	@property
 	def is_walking(self):
-		"""Is this just a walking itinerary with no transit?"""
+		"""Is this just walking with no transit?"""
 		return len(self.segments) == 0
 
 	@property
