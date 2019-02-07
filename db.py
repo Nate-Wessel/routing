@@ -113,7 +113,7 @@ def all_itinerary_trips(itin):
 	)
 	trips = []
 	for depart, arrive in c.fetchall():
-		trips.append( trip.Trip(depart,arrive,itin) )
+		trips.append( trip.Trip(depart,arrive,itin.original) )
 	return trips
 
 

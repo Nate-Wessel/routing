@@ -1,6 +1,7 @@
 import config
 from datetime import datetime, timedelta
 import pytz
+from itinerary import Itinerary
 
 # MANIPULATION OF TRIP VECTORS
 
@@ -67,28 +68,24 @@ def remove_premature_departures(trips):
 		fully_sorted = True 
 	#print('\t',starting_length - len(trips),'suboptimal trips removed')
 
-def summarize_itineraries(trips):
-	"""Returns a list of itineraries sorted by prominence. Total time within 
-	the time window spent as optimal next trip is assigned to itineraries as 
-	a property."""
-	# get a set of distinct itinerary objects
-	unique_itins = set([trip.itinerary for trip in trips])
-	# put this in a dict with initial counts
-	counter = { it:{'time':0,'count':0} for it in unique_itins }
+def summarize_paths(trips):
+	"""Returns a list of itineraries sorted by preeminence."""
+	# get a set of distinct Path objects
+	unique_paths = set([trip.path for trip in trips])
+	# extend these to Itinerary's
+	itins = [ Itinerary(path) for path in unique_paths ]
+	# make these referenceable by key
+	itin_dict = { itin:itin for itin in itins }
 	# add times from trips to each 
 	for trip in trips:
-		counter[trip.itinerary]['time'] += trip.time_before
-		counter[trip.itinerary]['count'] += 1
-	# for each itinerary and it's counts
-	for it in counter:
-		it.time = counter[it]['time']
-		it.count = counter[it]['count']
-	# we now reconstruct this from the dict as a list of itineraries
-	unique_itins =  [ it for it in counter ]
+		itin_dict[ trip.path ].add_trip( trip )
+	# now put the itinerariees back in a list
+	itins =  [ itin for itin in itin_dict ]
 	# get total time in trips
-	total_time = sum( [ it.time for it in unique_itins ] )
+	total_time = sum( [ itin.total_time for itin in itins ] )
 	# assign probabilities based on share of total time
-	for it in unique_itins:
-		it.prob = it.time / total_time
+	for itin in itins:
+		itin.prob = itin.total_time / total_time
 	# and sort by prob, highest first
-	return sorted( unique_itins, key=lambda k: k.prob, reverse=True )
+	return sorted( itins, key=lambda k: k.prob, reverse=True )
+

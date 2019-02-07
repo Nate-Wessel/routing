@@ -1,11 +1,11 @@
 from datetime import datetime as dt
 import db, config
-from itinerary import Itinerary
+from itinerary import Path
 import pytz
 
-class Trip(object):
-	"""one shortest trip"""
-	def __init__(self,depart,arrive,itin):
+class Trip:
+	"""One (shortest?) trip"""
+	def __init__(self,depart,arrive,path_string):
 		# unix timestamps
 		self.depart_ts = float(depart)
 		self.arrive_ts = float(arrive)
@@ -16,8 +16,8 @@ class Trip(object):
 		self.arrive = pytz.utc.localize( 
 			dt.utcfromtimestamp(self.arrive_ts) 
 		).astimezone(config.tz)
-		# itin can either be an Itinerary object or a string (from OTP script)
-		self.itinerary = itin if type(itin) == Itinerary else  Itinerary(itin)
+		# path can either be a path object or a string (from OTP script)
+		self.path = Path(path_string)
 		self.time_before = 0 # time from previous fastest trip
 
 	def __repr__(self):
@@ -34,7 +34,7 @@ class Trip(object):
 		database."""
 		# iterate over *route* segments
 		time = self.depart_ts
-		for i, step in enumerate( self.itinerary.segments ):
+		for i, step in enumerate( self.path.segments ):
 			expected_route = step['route']
 			# Query the database about this supposed trip
 			# pushing time forward from the departure to the arrival at the next stop
@@ -50,7 +50,7 @@ class Trip(object):
 			if route_id != expected_route:
 				print('\tdifferent route used:',route_id,'but expected',expected_route)
 		# add time for walking to the final destination
-		time += self.itinerary.final_walk / config.walk_speed
+		time += self.path.final_walk / config.walk_speed
 		diff_pct = (time-self.arrive_ts) / (self.arrive_ts-self.depart_ts)
-		print('\t{:+.2%}'.format(diff_pct) , self.itinerary.original )
+		print('\t{:+.2%}'.format(diff_pct) , self.path.original )
 
