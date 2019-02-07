@@ -3,10 +3,9 @@ import os, csv, time, triptools
 from datetime import datetime, timedelta
 from math import log
 import config, db, impedance
-from itinerary import Itinerary
 from statistics import mean
 
-class OD(object):
+class OD:
 	"""An O->D pair"""
 	def __init__(self,origin,dest):
 		"""origin and dest are integer IDs"""
@@ -18,8 +17,8 @@ class OD(object):
 		self.allocate_time(self.sched_trips)
 		self.allocate_time(self.retro_trips)
 		# summarize itinerary data
-		self.sched_itins = triptools.summarize_itineraries(self.sched_trips)
-		self.retro_itins = triptools.summarize_itineraries(self.retro_trips)
+		self.sched_itins = triptools.summarize_paths(self.sched_trips)
+		self.retro_itins = triptools.summarize_paths(self.retro_trips)
 
 	def __repr__(self):
 		name = str(self.orig)+' -> '+str(self.dest)
@@ -120,11 +119,4 @@ class OD(object):
 	def retro_entropy(self):
 		"""retro-spective entropy"""
 		return self.entropy(self.retro_itins)
-
-	def sched_itin(self,i):
-		"""scheduled itinerary at the given index if any"""
-		return self.sched_itins[i] if i < len(self.sched_itins) else None
-	def retro_itin(self,i):
-		"""scheduled itinerary at the given index if any"""
-		return self.retro_itins[i] if i < len(self.retro_itins) else None
 

@@ -14,13 +14,12 @@ print( 'any access:', od.access('any') )
 # get the departures and arrivals for the top three trips
 # and put them in a CSV
 
-# write all trips for the top three itineraries to a file
+# write all trips for the top itineraries to a file
 with open('data/db-trips.csv','w') as outfile:
 	outfile.write('depart,arrive,itinerary\n')
-	for i in [0,1,2]:
-		if od.retro_itin(i):
-			for trip in db.all_itinerary_trips(od.retro_itin(i)):
-				outfile.write(str(trip.depart_ts)+','+str(trip.arrive_ts)+',"'+str(od.retro_itin(i))+'"\n')
+	for itin in od.alter_itins():
+		for trip in db.all_itinerary_trips(itin):
+			outfile.write(str(trip.depart_ts)+','+str(trip.arrive_ts)+',"'+str(itin)+'"\n')
 
 #for trip in od.retro_trips:
 #	trip.verify()
