@@ -14,8 +14,8 @@ class OD:
 		# read in the trip itineraries
 		self.retro_trips = self.get_trips_from_file('retro')
 		self.sched_trips = self.get_trips_from_file('sched')
-		self.allocate_time(self.sched_trips)
-		self.allocate_time(self.retro_trips)
+		triptools.allocate_time(self.sched_trips)
+		triptools.allocate_time(self.retro_trips)
 		# summarize itinerary data
 		self.sched_itins = triptools.summarize_paths(self.sched_trips)
 		self.retro_itins = triptools.summarize_paths(self.retro_trips)
@@ -41,26 +41,6 @@ class OD:
 			return [ itin for itin in self.retro_itins if itin.prob >= 0.05 ]
 		elif kind in ['schedule','sched','s']:
 			return [ itin for itin in self.sched_itins if itin.prob >= 0.05 ]
-
-	def allocate_time(self,trips):
-		"""Allocate the time (in seconds) for which this trip is the next, 
-		clipping to the window used for removing trips."""
-		# sort the trips by departure
-		trips = sorted(trips, key=lambda k: k.depart) 
-		dates_seen = set()
-		for i, trip in enumerate(trips):
-			if i == 0 or not trip.depart.date() in dates_seen:
-				# trip is first of the day
-				dates_seen |= {trip.depart.date()}
-				# create a localized datetime 
-				start_dt = config.tz.localize( datetime.combine(
-					trip.depart.date(), config.window_start_time
-				) )
-				from_prev = (trip.depart - start_dt).total_seconds()
-			else:
-				# trip follows previous trip on this day 
-				from_prev = (trip.depart - trips[i-1].depart).total_seconds()
-			trip.time_before = from_prev
 				
 	def entropy(self,itineraries):
 		"""shannon entropy of the itinerary probability distribution"""

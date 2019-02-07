@@ -52,6 +52,7 @@ def clip_trips_to_window(trips):
 		del trips[i]
 	#print('\t',len(to_remove),'trips removed from window')
 
+
 def remove_premature_departures(trips):
 	"""If a trip departs earlier but gets in later than another trip it is 
 	suboptimal and needs to be removed."""
@@ -67,6 +68,7 @@ def remove_premature_departures(trips):
 				continue
 		fully_sorted = True 
 	#print('\t',starting_length - len(trips),'suboptimal trips removed')
+
 
 def summarize_paths(trips):
 	"""Returns a list of itineraries sorted by preeminence."""
@@ -88,4 +90,25 @@ def summarize_paths(trips):
 		itin.prob = itin.total_time / total_time
 	# and sort by prob, highest first
 	return sorted( itins, key=lambda k: k.prob, reverse=True )
+
+
+def allocate_time(trips):
+	"""Allocate the time (in seconds) for which this trip is the next, 
+	clipping to the window used for removing trips."""
+	# sort the trips by departure
+	trips = sorted(trips, key=lambda k: k.depart) 
+	dates_seen = set()
+	for i, trip in enumerate(trips):
+		if i == 0 or not trip.depart.date() in dates_seen:
+			# trip is first of the day
+			dates_seen |= {trip.depart.date()}
+			# create a localized datetime 
+			start_dt = config.tz.localize( datetime.combine(
+				trip.depart.date(), config.window_start_time
+			) )
+			from_prev = (trip.depart - start_dt).total_seconds()
+		else:
+			# trip follows previous trip on this day 
+			from_prev = (trip.depart - trips[i-1].depart).total_seconds()
+		trip.time_before = from_prev
 
