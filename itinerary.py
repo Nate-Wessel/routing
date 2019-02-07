@@ -1,14 +1,35 @@
+import re
+
 class Path:
 	"""Represents the path of a particular trip."""
 
-	def __init__(self,path_string):
+	def __init__(self,otp_string):
 		"""Parse a path from get-itineraries.py,
 		e.g. '{w28,s2773,r45,s2859,w42,s3280,r300,s7168,w36}'."""
-		self.walk_speed = 2 # meters / second
-		self.original = path_string
+		self.otp_string = otp_string
+
+	def __repr__(self):
+		"""The original path string used to construct the object"""
+		return self.otp_string
+
+	def __eq__(self,other):
+		"""Compares the original string that defines this object."""
+		return self.otp_string == other.otp_string
+
+	def __hash__(self):
+		"""Same as above, identical itinerary/path strings are equal."""
+		return hash(self.otp_string)
+
+
+class Itinerary(Path):
+	"""Characterizes a typical strategy common to trips on an OD."""
+	
+	def __init__(self,path_instance):
+		"""constructed from an arbitrary path instance"""
+		Path.__init__(self,path_instance.otp_string)
 		self.segments = [] # segment starts with walking to a stop, ends at a stop
 		# remove SQL brackets and break on commas
-		steps = path_string.strip('{}').split(',')
+		steps = self.otp_string.strip('{}').split(',')
 		# assign length of final walk
 		self.final_walk = int(steps[-1][1:]) if steps[-1][0] == 'w' else 0
 		# iterate over *route* segments, looking forward and back for other data
@@ -27,17 +48,16 @@ class Path:
 				'walk':walk, 'stop1':stop1, 'stop2':stop2, 'route':route
 			} )
 
-	def __repr__(self):
-		"""The original path string used to construct the object"""
-		return self.original
+		self.trips = []
+		self.prob = 0
+		
+	def add_trip(self,trip):
+		self.trips.append(trip)
 
-	def __eq__(self,other):
-		"""Compares the original string that defines this object."""
-		return self.original == other.original
-
-	def __hash__(self):
-		"""Same as above, identical itinerary/path strings are equal."""
-		return hash(self.original)
+	@property
+	def total_time(self):
+		"""Total time of optimality of all trips"""
+		return sum([trip.time_before for trip in self.trips])
 
 	@property
 	def is_walking(self):
@@ -60,38 +80,19 @@ class Path:
 		return [ s['route'] for s in self.segments ]
 
 	@property
-	def collapsed_routes(self):
-		"""Same as routes, but collapses any identical subsequent routes."""
-		all_routes = self.routes
-		if len(all_routes) <= 1 or len(all_routes) == len(set(all_routes)):
-			return all_routes
-		else: # else cleaning is necessary
-			cleaned_routes = [all_routes[0]]
-			for i, route in enumerate(all_routes):
-				if i > 0 and route != all_routes[i-1]:
-					cleaned_routes.append(route)
-			return cleaned_routes
-
-	@property
 	def walk_distance(self):
 		"""Return the total walking distance in meters"""
 		return sum( [ s['walk'] for s in self.segments ] ) + self.final_walk
 
-
-class Itinerary(Path):
-	"""Characterizes a typical strategy common to trips on an OD."""
-	
-	def __init__(self,path_instance):
-		"""constructed from an arbitrary path instance"""
-		Path.__init__(self,path_instance.original)
-		self.trips = []
-		self.prob = 0
-		
-	def add_trip(self,trip):
-		self.trips.append(trip)
-
-	@property
-	def total_time(self):
-		"""Total time of optimality of all trips"""
-		return sum([trip.time_before for trip in self.trips])
-
+#	@property
+#	def collapsed_routes(self):
+#		"""Same as routes, but collapses any identical subsequent routes."""
+#		all_routes = self.routes
+#		if len(all_routes) <= 1 or len(all_routes) == len(set(all_routes)):
+#			return all_routes
+#		else: # else cleaning is necessary
+#			cleaned_routes = [all_routes[0]]
+#			for i, route in enumerate(all_routes):
+#				if i > 0 and route != all_routes[i-1]:
+#					cleaned_routes.append(route)
+#			return cleaned_routes

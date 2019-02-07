@@ -52,5 +52,5 @@ class Trip:
 		# add time for walking to the final destination
 		time += self.path.final_walk / config.walk_speed
 		diff_pct = (time-self.arrive_ts) / (self.arrive_ts-self.depart_ts)
-		print('\t{:+.2%}'.format(diff_pct) , self.path.original )
+		print('\t{:+.2%}'.format(diff_pct) , self.path )
 
