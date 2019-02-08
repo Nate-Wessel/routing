@@ -32,7 +32,7 @@ def habitual_times(OD):
 				habit_itin = itin
 		else:
 			# this trip involves transit and we need to look up trips in the DB
-			trips = db.all_itinerary_trips(itin)
+			trips = itin.get_trips()
 			triptools.clip_trips_to_window(trips)
 			times = triptools.trips2times(trips)
 			if mean_travel_time(times) <= mean_travel_time(current_best_times):
@@ -56,7 +56,7 @@ def realtime_times(OD):
 			walk_time = timedelta(seconds=seconds_walking)
 		else:
 			# not a walking itinerary
-			trips = db.all_itinerary_trips(itin)
+			trips = itin.get_trips()
 			possible_trips.extend(trips)
 	# now that we have trips from all itineraries
 	if walk_option and len(OD.alter_itins()) == 1:
@@ -82,7 +82,7 @@ def route_indifferent_times(OD):
 			seconds_walking = plausible_itin.walk_distance / config.walk_speed
 			walk_time = timedelta(seconds=seconds_walking)
 		else: # not a walking itinerary
-			trips = db.all_itinerary_trips(plausible_itin)
+			trips = plausible_itin.get_trips()
 			possible_trips.extend(trips)
 	# now that we have trips from all itineraries
 	if walk_option and len(OD.alter_itins()) == 1:

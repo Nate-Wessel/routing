@@ -18,7 +18,7 @@ print( 'any access:', od.access('any') )
 with open('data/db-trips.csv','w') as outfile:
 	outfile.write('depart,arrive,itinerary\n')
 	for itin in od.alter_itins():
-		for trip in db.all_itinerary_trips(itin):
+		for trip in itin.get_trips():
 			outfile.write(str(trip.depart_ts)+','+str(trip.arrive_ts)+',"'+str(itin)+'"\n')
 
 #for trip in od.retro_trips:

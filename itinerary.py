@@ -1,4 +1,5 @@
 import re
+import db
 
 class Path:
 	"""Represents the path of a particular trip."""
@@ -59,16 +60,23 @@ class Itinerary(Path):
 				'walk':walk, 'stop1':stop1, 'stop2':stop2, 'route':route
 			} )
 
-		self.trips = []
+		self.OTP_trips = []
+		self.DB_trips = None
 		self.prob = 0
-		
+	
+	def get_trips(self):
+		"""Get all trips corresponding to this itinerary from the database."""
+		if not self.DB_trips:
+			self.DB_trips = db.all_itinerary_trips(self)
+		return self.DB_trips
+
 	def add_trip(self,trip):
-		self.trips.append(trip)
+		self.OTP_trips.append(trip)
 
 	@property
 	def total_time(self):
 		"""Total time of optimality of all trips"""
-		return sum([trip.time_before for trip in self.trips])
+		return sum([trip.time_before for trip in self.OTP_trips])
 
 	@property
 	def is_walking(self):
