@@ -29,28 +29,29 @@ class Trip:
 		"""duration of trip as timedelta"""
 		return self.arrive - self.depart
 
-	def verify(self):
-		"""Try to verify that this trip, or something close to it, exists in the 
-		database."""
-		# iterate over *route* segments
-		time = self.depart_ts
-		for i, step in enumerate( self.path.segments ):
-			expected_route = step['route']
-			# Query the database about this supposed trip
-			# pushing time forward from the departure to the arrival at the next stop
-			( time, route_id ) = db.o2d_at( 
-				step['stop1'], 
-				step['stop2'], 
-				time + step['walk']/config.walk_speed
-			)
-			# make sure we got some result
-			if not route_id:
-				print('\t',expected_route,'segment not confirmed')
-				return
-			if route_id != expected_route:
-				print('\tdifferent route used:',route_id,'but expected',expected_route)
-		# add time for walking to the final destination
-		time += self.path.final_walk / config.walk_speed
-		diff_pct = (time-self.arrive_ts) / (self.arrive_ts-self.depart_ts)
-		print('\t{:+.2%}'.format(diff_pct) , self.path )
+# TODO just roping this off for a moment instead of refactoring it now
+#	def verify(self):
+#		"""Try to verify that this trip, or something close to it, exists in the 
+#		database."""
+#		# iterate over *route* segments
+#		time = self.depart_ts
+#		for i, step in enumerate( self.path.segments ):
+#			expected_route = step['route']
+#			# Query the database about this supposed trip
+#			# pushing time forward from the departure to the arrival at the next stop
+#			( time, route_id ) = db.o2d_at( 
+#				step['stop1'], 
+#				step['stop2'], 
+#				time + step['walk']/config.walk_speed
+#			)
+#			# make sure we got some result
+#			if not route_id:
+#				print('\t',expected_route,'segment not confirmed')
+#				return
+#			if route_id != expected_route:
+#				print('\tdifferent route used:',route_id,'but expected',expected_route)
+#		# add time for walking to the final destination
+#		time += self.path.final_walk / config.walk_speed
+#		diff_pct = (time-self.arrive_ts) / (self.arrive_ts-self.depart_ts)
+#		print('\t{:+.2%}'.format(diff_pct) , self.path )
 

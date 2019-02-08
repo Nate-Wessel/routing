@@ -106,7 +106,7 @@ def all_itinerary_trips(itin):
 		""", { 
 			'o_stops':itin.o_stops,
 			'd_stops':itin.d_stops,
-			'final_depth':len(itin.segments),
+			'final_depth':len(itin.routes),
 			'window_start':str(config.window_start_time),
 			'window_end':str(config.window_end_time)
 		}
