@@ -2,6 +2,12 @@
 import math, config, db, triptools
 import datetime as dt
 
+class Departure:
+	"""Departure, at a particular time, using a particular method."""
+	def __init__(self,departure,travel_time):
+		self.departure_time = departure
+		self.travel_time = travel_time
+
 def cum(td,theta=45):
 	"""Cumulative accessibility function. Accepts a timedelta and returns a 
 	binary measure. Theta is in minutes."""
@@ -16,12 +22,12 @@ def habitual_times(OD):
 	travellers consistently take the itinerary which minimizes mean travel
 	time."""
 	habit_itin = None
-	current_best_times = [dt.timedelta(seconds=99999999999)]
+	current_best_times = [Departure(dt.datetime(2017,1,1),dt.timedelta(days=99))]
 	# look up times on all viable itineraries, keeping the best times
 	for itin in OD.alter_itins('retro'):
 		if itin.is_walking:
 			walk_time = dt.timedelta(seconds=itin.walk_distance/config.walk_speed)
-			if seconds_walking <= mtd(current_best_times):
+			if seconds_walking <= mean_travel_time(current_best_times):
 				current_best_times = [ seconds_walking ]
 				habit_itin = itin
 		else:
@@ -29,7 +35,7 @@ def habitual_times(OD):
 			trips = db.all_itinerary_trips(itin)
 			triptools.clip_trips_to_window(trips)
 			times = triptools.trips2times(trips)
-			if mtd(times) <= mtd(current_best_times):
+			if mean_travel_time(times) <= mean_travel_time(current_best_times):
 				current_best_times = times
 				habit_itin = itin
 	if habit_itin:
@@ -56,7 +62,7 @@ def realtime_times(OD):
 	if walk_option and len(OD.alter_itins()) == 1:
 		return [ walk_time ]
 	triptools.clip_trips_to_window(possible_trips)
-	#triptools.remove_premature_departures(possible_trips)
+	#  triptools.remove_premature_departures(possible_trips)
 	if walk_option and len(OD.alter_itins()) > 1:
 		return triptools.trips2times(possible_trips,walk_time)
 	else:
@@ -89,10 +95,9 @@ def route_indifferent_times(OD):
 		return triptools.trips2times(possible_trips)
 
 
-def mtd(td_list):
-	"""Mean TimeDelta"""
+def mean_travel_time(departure_list):
+	"""Mean travel time from a list of departures"""
 	# convert to seconds, take the mean, return a timedelta
-	sec_list = [ td.total_seconds() for td in td_list ]
-	return dt.timedelta( seconds=(sum(sec_list)/len(td_list)) )
-
+	sec_list = [ tt.travel_time.total_seconds() for tt in departure_list ]
+	return dt.timedelta( seconds=(sum(sec_list)/len(departure_list)) )
 

@@ -1,7 +1,8 @@
-import config
-from datetime import datetime, timedelta
 import pytz
+from datetime import datetime, timedelta
+import config
 from itinerary import Itinerary
+from impedance import Departure
 
 # MANIPULATION OF TRIP VECTORS
 
@@ -28,7 +29,7 @@ def trips2times(trips,upper_bound=None):
 			td = trips[i].arrive - time
 			if upper_bound and td > upper_bound:
 				td = upper_bound
-			travel_times.append( td )
+			travel_times.append( Departure(time,td) )
 			time += timedelta(minutes=1)
 	return travel_times
 		
