@@ -83,7 +83,7 @@ def summarize_paths(trips):
 	# add times from trips to each 
 	for trip in trips:
 		i = itins.index(trip.path)
-		itins[i].add_trip( trip )
+		itins[i].add_OTP_trip( trip )
 	# get total time in trips
 	total_time = sum( [ itin.total_time for itin in itins ] )
 	# assign probabilities based on share of total time

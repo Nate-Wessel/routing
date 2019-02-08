@@ -70,7 +70,7 @@ class Itinerary(Path):
 			self.DB_trips = db.all_itinerary_trips(self)
 		return self.DB_trips
 
-	def add_trip(self,trip):
+	def add_OTP_trip(self,trip):
 		self.OTP_trips.append(trip)
 
 	@property
