@@ -9,17 +9,28 @@ class Path:
 		self.otp_string = otp_string
 
 	def __repr__(self):
-		"""The original path string used to construct the object"""
+		"""Just the original path string used to construct the object"""
 		return self.otp_string
 
 	def __eq__(self,other):
-		"""Compares the original string that defines this object."""
-		return self.otp_string == other.otp_string
+		"""Equality is approximate to account for only-slightly-different paths."""
+		return self.letters == other.letters and (
+			self.routes == other.routes or self.stops == other.stops
+		)
 
-	def __hash__(self):
-		"""Same as above, identical itinerary/path strings are equal."""
-		return hash(self.otp_string)
-
+	@property
+	def letters(self):
+		"""Step type sequence of the path. 
+		e.g. from '{w838,s9600,r506,s9614,w583}' to 'wsrsw' """
+		return ''.join( re.findall(r'[wsr]',self.otp_string) )
+	@property
+	def routes(self):
+		"""Route names in sequence as a string. Used for comparison."""
+		return ';'.join( re.findall('(?<=r)\d+',self.otp_string) )
+	@property
+	def stops(self):
+		"""Stop IDs in sequence as a string. Used for comarison."""
+		return ';'.join( re.findall('(?<=s)\d+',self.otp_string) )
 
 class Itinerary(Path):
 	"""Characterizes a typical strategy common to trips on an OD."""
@@ -73,11 +84,6 @@ class Itinerary(Path):
 	def d_stops(self):
 		"""Return an ordered list of origin stops"""
 		return [ s['stop2'] for s in self.segments ]
-
-	@property
-	def routes(self):
-		"""Return an ordered list of routes used"""
-		return [ s['route'] for s in self.segments ]
 
 	@property
 	def walk_distance(self):

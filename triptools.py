@@ -72,17 +72,17 @@ def remove_premature_departures(trips):
 
 def summarize_paths(trips):
 	"""Returns a list of itineraries sorted by preeminence."""
-	# get a set of distinct Path objects
-	unique_paths = set([trip.path for trip in trips])
-	# extend these to Itinerary's
-	itins = [ Itinerary(path) for path in unique_paths ]
-	# make these referenceable by key
-	itin_dict = { itin:itin for itin in itins }
+	# get a set of distinct Path objects. We have to use equality rather than 
+	# hashing here. 
+	itins = []
+	for trip in trips:
+		if trip.path not in itins:
+			# convert neew paths to Itineraries
+			itins.append( Itinerary(trip.path) )
 	# add times from trips to each 
 	for trip in trips:
-		itin_dict[ trip.path ].add_trip( trip )
-	# now put the itinerariees back in a list
-	itins =  [ itin for itin in itin_dict ]
+		i = itins.index(trip.path)
+		itins[i].add_trip( trip )
 	# get total time in trips
 	total_time = sum( [ itin.total_time for itin in itins ] )
 	# assign probabilities based on share of total time
