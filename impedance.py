@@ -15,7 +15,7 @@ def cum(td,theta=45):
 
 def negexp(td,beta=30):
 	"""Negative exponential distance decay function with parameter in minutes."""
-	return math.exp( -( td.total_seconds() / 60. / beta ) )
+	return math.exp( -( td.travel_time.total_seconds() / 60. / beta ) )
 
 def habitual_times(OD):
 	"""Return a set of travel times over the time window for the assumption that
