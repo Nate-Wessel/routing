@@ -26,7 +26,8 @@ def habitual_times(OD):
 	# look up times on all viable itineraries, keeping the best times
 	for itin in OD.alter_itins('retro'):
 		if itin.is_walking:
-			walk_time = dt.timedelta(seconds=itin.walk_distance/config.walk_speed)
+			walk_time = dt.timedelta(
+				seconds= itin.total_walk_distance/config.walk_speed )
 			if seconds_walking <= mean_travel_time(current_best_times):
 				current_best_times = [ seconds_walking ]
 				habit_itin = itin
@@ -52,7 +53,7 @@ def realtime_times(OD):
 		if itin.is_walking:
 			walk_option = True
 			# don't look up a walking trip - we already know the travel time
-			seconds_walking = itin.walk_distance / config.walk_speed
+			seconds_walking = itin.total_walk_distance / config.walk_speed
 			walk_time = timedelta(seconds=seconds_walking)
 		else:
 			# not a walking itinerary
@@ -74,15 +75,15 @@ def route_indifferent_times(OD):
 	indifferent to route choice. This is the null hypothesis essentially."""
 	possible_trips = []
 	walk_option = False
-	for plausible_itin in OD.alter_itins():
+	for itin in OD.alter_itins():
 		# there should only be <= 1 walk option per OD
-		if plausible_itin.is_walking:
+		if itin.is_walking:
 			walk_option = True
 			# don't look up a walking trip - we already know the travel time
-			seconds_walking = plausible_itin.walk_distance / config.walk_speed
+			seconds_walking = itin.total_walk_distance / config.walk_speed
 			walk_time = timedelta(seconds=seconds_walking)
 		else: # not a walking itinerary
-			trips = plausible_itin.get_trips()
+			trips = itin.get_trips()
 			possible_trips.extend(trips)
 	# now that we have trips from all itineraries
 	if walk_option and len(OD.alter_itins()) == 1:
