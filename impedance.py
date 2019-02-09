@@ -7,6 +7,8 @@ class Departure:
 	def __init__(self,departure,travel_time):
 		self.departure_time = departure
 		self.travel_time = travel_time
+	def __repr__(self):
+		return 'departure_at:'+str(self.departure_time)
 
 def cum(td,theta=45):
 	"""Cumulative accessibility function. Accepts a timedelta and returns a 
