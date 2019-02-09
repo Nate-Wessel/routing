@@ -1,6 +1,7 @@
 # functions involving BD interaction
 import psycopg2
 import trip, config
+from datetime import timedelta
 
 # connect and establish a cursor, based on parameters in conf.py
 connection = psycopg2.connect(config.DB_conn)
@@ -71,7 +72,9 @@ def all_itinerary_trips(itin):
 						st2.stop_uid = (%(d_stops)s)[1] AND
 						st1.stop_sequence < st2.stop_sequence AND
 						-- departure is within time window
-						st1.local_time BETWEEN %(window_start)s::time AND %(window_end)s::time
+						st1.local_time BETWEEN 
+							%(window_start)s::time AND 
+							%(window_end)s::time
 						
 				UNION
 				
