@@ -7,9 +7,9 @@ from impedance import Departure
 # MANIPULATION OF TRIP VECTORS
 
 def trips2times(trips,upper_bound=None):
-	"""Take a vector of trips and return a vector of sampled travel times
-	(timedeltas). Upper bound is used for limiting times by e.g. a worst case
-	walking option"""
+	"""Take a vector of trips and return a vector of sampled travel times. 
+	Upper bound is used for limiting times by e.g. a worst case walking 
+	option"""
 	travel_times = []
 	# ensure trips are sorted by departure, ASC
 	trips.sort(key = lambda x: x.depart_ts)
