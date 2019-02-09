@@ -89,6 +89,20 @@ class OD:
 			print('invalid access type supplied')
 			assert False
 
+	def travel_times(self,kind='habit'):
+		"""Return a set of travel times based on the given accessibility metric"""
+		if kind in ['habitual','habit','hab','h']:
+			# always take the itinerary that results in lowest average travel times
+			return impedance.habitual_times(self)
+		elif kind in ['any','a']:
+			# any route getting optimality 5%+ of the time can be used optimally
+			return impedance.route_indifferent_times(self)
+		elif kind in ['realtime','real','rt','r']:
+			return impedance.realtime_times(self)
+		else: 
+			print('invalid access type supplied')
+			assert False
+
 	# here be some simplifying properties/methods
 	
 	@property
