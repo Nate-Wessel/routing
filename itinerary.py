@@ -77,20 +77,8 @@ class Itinerary(Path):
 		return [ int(re.search('(?<=s)\d+',m).group()) for m in routes_and_stops ]
 
 	@property
-	def walk_distance(self):
+	def total_walk_distance(self):
 		"""Return the total walking distance in meters"""
 		walks = re.findall('(?<=w)\d+',self.otp_string)
 		return sum([int(walk) for walk in walks])
 
-#	@property
-#	def collapsed_routes(self):
-#		"""Same as routes, but collapses any identical subsequent routes."""
-#		all_routes = self.routes
-#		if len(all_routes) <= 1 or len(all_routes) == len(set(all_routes)):
-#			return all_routes
-#		else: # else cleaning is necessary
-#			cleaned_routes = [all_routes[0]]
-#			for i, route in enumerate(all_routes):
-#				if i > 0 and route != all_routes[i-1]:
-#					cleaned_routes.append(route)
-#			return cleaned_routes
