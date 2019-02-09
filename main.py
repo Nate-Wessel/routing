@@ -3,29 +3,49 @@
 #	2) OD-departure-time level departures for the three route methods
 
 import csv
+import config
 from OD import OD
 
-# open a file for writing output
-with open('data/summary.csv','w+') as f:
-	fieldnames = [
-		'i','o','d','azimuth','arc',
-		'sched_ent','retro_ent',
+# open files for writing output
+with open('data/summary.csv','w+') as f1, open('data/all_times.csv','w+') as f2:
+	# OD level outputs
+	fieldnames = [ 'i','o','d','azimuth','arc','sched_ent','retro_ent',
 		'sched_it_n','retro_it_n' ]
-	writer = csv.DictWriter(f,fieldnames=fieldnames)
-	writer.writeheader()
-	# open a file for reading input
-	with open('data/1k_od_sample.csv') as f:
-		reader = csv.DictReader(f)
+	od_writer = csv.DictWriter(f1,fieldnames=fieldnames)
+	od_writer.writeheader()
+	# OD - time level outputs
+	fieldnames = [ 'o','d','departure','hour','hab','real','any' ]
+	times_writer = csv.DictWriter(f2,fieldnames=fieldnames)
+	times_writer.writeheader()
+
+	# read input from a file
+	with open('data/1k_od_sample.csv') as f3:
+		reader = csv.DictReader(f3)
 		for r in reader:
 			# construct the OD
 			od = OD( r['o'], r['d'] )
 			# add attributes to output file
-			data_dict = {
-				'i':r['i'], 'o':od.orig, 'd':od.dest,
+			od_writer.writerow({
+				'i':r['i'], 'o':r['o'], 'd':r['d'],
 				'azimuth':r['azimuth'], 'arc':r['arc'],
 				'sched_ent':od.sched_entropy,
 				'retro_ent':od.retro_entropy,
 				'sched_it_n':len(od.alter_itins('sched')),
 				'retro_it_n':len(od.alter_itins('retro'))
-			}
-			writer.writerow(data_dict)
+			})
+			# calculate travel times for the OD
+			habit_times = od.travel_times('habit')
+			real_times = od.travel_times('real')
+			any_times = od.travel_times('any')
+			i = 0
+			while i < len(habit_times):
+				times_writer.writerow({
+					'o':r['o'], 'd':r['d'],
+					'departure':habit_times[i].unix_departure,
+					'hour':habit_times[i].departure_hour,
+					'hab':habit_times[i].minutes_travel,
+					'real':real_times[i].minutes_travel,
+					'any':any_times[i].minutes_travel
+				})
+				i += 1
+			break 

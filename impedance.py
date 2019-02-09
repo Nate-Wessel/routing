@@ -9,6 +9,15 @@ class Departure:
 		self.travel_time = travel_time
 	def __repr__(self):
 		return 'departure_at:'+str(self.departure_time)
+	@property
+	def unix_departure(self):
+		return self.departure_time.timestamp()
+	@property
+	def minutes_travel(self):
+		return round( self.travel_time.total_seconds()/60, 3 )
+	@property
+	def departure_hour(self):
+		return self.departure_time.hour
 
 def cum(td,theta=45):
 	"""Cumulative accessibility function. Accepts a timedelta and returns a 
