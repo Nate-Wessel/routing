@@ -76,12 +76,10 @@ def summarize_paths(trips):
 	# get a set of distinct Path objects. We have to use equality rather than 
 	# hashing here. 
 	itins = []
+	# add all trips to the Itinerary each belongs to 
 	for trip in trips:
 		if trip.path not in itins:
-			# convert neew paths to Itineraries
 			itins.append( Itinerary(trip.path) )
-	# add times from trips to each 
-	for trip in trips:
 		i = itins.index(trip.path)
 		itins[i].add_OTP_trip( trip )
 	# get total time in trips

@@ -1,5 +1,6 @@
 import re
 import db
+from statistics import mode
 
 class Path:
 	"""Represents the path of a particular trip."""
@@ -18,6 +19,9 @@ class Path:
 		return self.letters == other.letters and (
 			self.routes == other.routes or self.stops == other.stops
 		)
+	def __hash__(self):
+		"""This is based only on the OTP String."""
+		return hash(self.otp_string)
 
 	@property
 	def letters(self):
@@ -43,15 +47,36 @@ class Itinerary(Path):
 		self.OTP_trips = []
 		self.DB_trips = None
 		self.prob = 0
-	
+
+	def __hash__(self):
+		"""This is to override the Path method only. this function is not to be 
+		used."""
+		assert False # we should not be here. 
+
 	def get_trips(self):
 		"""Get all trips corresponding to this itinerary from the database."""
 		if not self.DB_trips:
 			self.DB_trips = db.all_itinerary_trips(self)
 		return self.DB_trips
 
-	def add_OTP_trip(self,trip):
-		self.OTP_trips.append(trip)
+	def add_OTP_trip(self,trip_to_add):
+		"""Add a trip which uses this itinerary. Update to the most common path 
+		if necessary."""
+		# add the trip if valid
+		if trip_to_add.path != self or trip_to_add in self.OTP_trips: return 
+		self.OTP_trips.append(trip_to_add)
+		# check that we still have the most common itinerary
+		if trip_to_add.path.otp_string != self.otp_string:
+			# count up the frequencies of each of the contenders
+			tug_o_war = 0
+			for trip in self.OTP_trips:
+				if trip.path.otp_string == self.otp_string:
+					tug_o_war += 1
+				elif trip.path.otp_string == trip_to_add.path.otp_string:
+					tug_o_war -= 1
+			# Did the contender beat the current champion?
+			if tug_o_war < 0: 
+				self.otp_string = trip_to_add.path.otp_string
 
 	@property
 	def total_time(self):
