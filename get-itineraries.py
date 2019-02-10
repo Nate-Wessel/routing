@@ -37,7 +37,7 @@ if all_pairs:
 			if not os.path.exists(output_dir+str(oid)+'/'+str(did)+'.csv'):
 				OD_pairs.append( (oid,did) )
 else:
-	with open('data/from-home-trips.csv') as csvfile:
+	with open('data/10k_od_sample.csv') as csvfile:
 		reader = csv.DictReader(csvfile, delimiter=',')
 		for r in reader:
 			# skip if the results already exist
