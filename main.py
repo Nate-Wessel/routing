@@ -48,4 +48,3 @@ with open('data/summary.csv','w+') as f1, open('data/all_times.csv','w+') as f2:
 					'any':any_times[i].minutes_travel
 				})
 				i += 1
-			break 

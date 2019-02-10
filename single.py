@@ -2,8 +2,8 @@
 from OD import OD
 import db
 
-oid = 12
-did = 316
+oid = 222
+did = 208
 od = OD(oid,did)
 
 print( od )
