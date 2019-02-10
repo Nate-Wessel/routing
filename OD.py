@@ -76,15 +76,15 @@ class OD:
 		metric"""
 		if kind in ['habitual','h','H']:
 			# always take the itinerary that results in lowest average travel times
-			times = impedance.habitual_times(self)
-			return mean( [ impedance.negexp(time) for time in times ] )
+			departures = impedance.habitual_times(self)
+			return mean( [ impedance.negexp(dep) for dep in departures if dep.travel_time ] )
 		elif kind in ['any_plausible','any','a']:
 			# any route getting optimality 5%+ of the time can be used optimally
-			times = impedance.route_indifferent_times(self)
-			return mean( [ impedance.negexp(time) for time in times ] )
+			departures = impedance.route_indifferent_times(self)
+			return mean( [ impedance.negexp(dep) for dep in departures if dep.travel_time] )
 		elif kind in ['realtime','real','rt','r']:
-			times = impedance.realtime_times(self)
-			return mean( [ impedance.negexp(time) for time in times ] )
+			departures = impedance.realtime_times(self)
+			return mean( [ impedance.negexp(dep) for dep in departures if dep.travel_time] )
 		else: 
 			print('invalid access type supplied')
 			assert False

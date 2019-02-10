@@ -8,7 +8,7 @@ class Departure:
 		self.departure_time = departure
 		self.travel_time = travel_time
 	def __repr__(self):
-		return 'departure_at:'+str(self.departure_time)
+		return 'dep:'+str(self.departure_time)+'tt:'+str(self.travel_time)
 	@property
 	def unix_departure(self):
 		return self.departure_time.timestamp()
@@ -36,20 +36,16 @@ def habitual_times(OD):
 	current_best_times = [Departure(dt.datetime(2017,1,1),dt.timedelta(days=99))]
 	# look up times on all viable itineraries, keeping the best times
 	for itin in OD.alter_itins('retro'):
+		trips = itin.get_trips()
+		triptools.clip_trips_to_window(trips)
 		if itin.is_walking:
-			walk_time = dt.timedelta(
-				seconds= itin.total_walk_distance/config.walk_speed )
-			if seconds_walking <= mean_travel_time(current_best_times):
-				current_best_times = [ seconds_walking ]
-				habit_itin = itin
+			walk_time = dt.timedelta(seconds= itin.total_walk_distance / config.walk_speed)
+			times = triptools.trips2times(trips,walk_time)
 		else:
-			# this trip involves transit and we need to look up trips in the DB
-			trips = itin.get_trips()
-			triptools.clip_trips_to_window(trips)
 			times = triptools.trips2times(trips)
-			if mean_travel_time(times) <= mean_travel_time(current_best_times):
-				current_best_times = times
-				habit_itin = itin
+		if mean_travel_time(times) < mean_travel_time(current_best_times):
+			current_best_times = times
+			habit_itin = itin
 	if habit_itin:
 		print('habit itin:',habit_itin)
 		return current_best_times
@@ -65,7 +61,7 @@ def realtime_times(OD):
 			walk_option = True
 			# don't look up a walking trip - we already know the travel time
 			seconds_walking = itin.total_walk_distance / config.walk_speed
-			walk_time = timedelta(seconds=seconds_walking)
+			walk_time = dt.timedelta(seconds=seconds_walking)
 		else:
 			# not a walking itinerary
 			trips = itin.get_trips()
@@ -92,7 +88,7 @@ def route_indifferent_times(OD):
 			walk_option = True
 			# don't look up a walking trip - we already know the travel time
 			seconds_walking = itin.total_walk_distance / config.walk_speed
-			walk_time = timedelta(seconds=seconds_walking)
+			walk_time = dt.timedelta(seconds=seconds_walking)
 		else: # not a walking itinerary
 			trips = itin.get_trips()
 			possible_trips.extend(trips)
@@ -109,7 +105,7 @@ def route_indifferent_times(OD):
 
 def mean_travel_time(departure_list):
 	"""Mean travel time from a list of departures"""
-	# convert to seconds, take the mean, return a timedelta
-	sec_list = [ tt.travel_time.total_seconds() for tt in departure_list ]
+	# convert to seconds, take the mean, return a timedelta, ignoring None's
+	sec_list = [ d.travel_time.total_seconds() for d in departure_list if d.travel_time]
 	return dt.timedelta( seconds=(sum(sec_list)/len(departure_list)) )
 

@@ -1,6 +1,6 @@
 import re
-import db
-from statistics import mode
+from datetime import datetime
+import db, config
 
 class Path:
 	"""Represents the path of a particular trip."""
@@ -54,9 +54,22 @@ class Itinerary(Path):
 		assert False # we should not be here. 
 
 	def get_trips(self):
-		"""Get all trips corresponding to this itinerary from the database."""
+		"""Get all trips corresponding to this itinerary (from the database)."""
 		if not self.DB_trips:
-			self.DB_trips = db.all_itinerary_trips(self)
+			if not self.is_walking:
+				self.DB_trips = db.all_itinerary_trips(self)
+			else:
+				# create a single walking trip at the start of the time window
+				from trip import Trip
+				walk_seconds = self.total_walk_distance / config.walk_speed
+				unix_trip_start = config.tz.localize( datetime.combine(
+					config.window_start_date,config.window_start_time
+				)).timestamp()
+				self.DB_trips = [Trip(
+					unix_trip_start,
+					unix_trip_start + walk_seconds,
+					self.otp_string
+				)]
 		return self.DB_trips
 
 	def add_OTP_trip(self,trip_to_add):

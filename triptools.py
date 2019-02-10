@@ -9,12 +9,14 @@ from impedance import Departure
 def trips2times(trips,upper_bound=None):
 	"""Take a vector of trips and return a vector of sampled travel times. 
 	Upper bound is used for limiting times by e.g. a worst case walking 
-	option"""
-	travel_times = []
+	option. If trips is an empty list, but the upper bound is provided then only 
+	walk times are returned."""
+	departures = []
 	# ensure trips are sorted by departure, ASC
 	trips.sort(key = lambda x: x.depart_ts)
-	# first only look at days (dates) where there is data
-	for day in sorted(list(set([ trip.depart.date() for trip in trips ]))):
+	# consider all days in time window
+	day = config.window_start_date
+	while day <= config.window_end_date:
 		# times from start of window on day to end of window 
 		time = config.tz.localize( datetime.combine( 
 			day, config.window_start_time ) )
@@ -22,16 +24,22 @@ def trips2times(trips,upper_bound=None):
 			day, config.window_end_time ) )
 		# iterate over minutes looking for arrival of next-departing trip
 		i = 0
-		while time < end_time and i < len(trips)-1:
-			# While this trip departs in the past and i is still in range
-			while i < len(trips)-1 and trips[i].depart <= time: 
+		while time < end_time: # While still in the time window
+			# move the trip index up to the present time if necessary
+			while i < len(trips) and trips[i].depart <= time: 
 				i += 1
-			td = trips[i].arrive - time
-			if upper_bound and td > upper_bound:
-				td = upper_bound
-			travel_times.append( Departure(time,td) )
+			# check that we still have trips
+			if i >= len(trips): 
+				travel_time = upper_bound # can be None
+			else: 
+				travel_time = trips[i].arrive - time
+				if upper_bound and travel_time > upper_bound: 
+					travel_time = upper_bound
+			# append and increment
+			departures.append( Departure(time,travel_time) )
 			time += timedelta(minutes=1)
-	return travel_times
+		day += timedelta(days=1)
+	return departures
 		
 
 def clip_trips_to_window(trips):
@@ -41,7 +49,7 @@ def clip_trips_to_window(trips):
 	for i, trip in enumerate(trips):
 		if ( # checking for GOOD trips 
 			# departs inside window
-			config.window_start_time < trip.depart.time() < config.window_end_time 
+			config.window_start_time <= trip.depart.time() <= config.window_end_time 
 			# and departs within date range
 			and trip.depart.date() >= config.window_start_date
 			and trip.depart.date() <= config.window_end_date 
