@@ -38,11 +38,7 @@ def habitual_times(OD):
 	for itin in OD.alter_itins('retro'):
 		trips = itin.get_trips()
 		triptools.clip_trips_to_window(trips)
-		if itin.is_walking:
-			walk_time = dt.timedelta(seconds= itin.total_walk_distance / config.walk_speed)
-			times = triptools.trips2times(trips,walk_time)
-		else:
-			times = triptools.trips2times(trips)
+		times = triptools.trips2times(trips,itin.walk_time)
 		if mean_travel_time(times) < mean_travel_time(current_best_times):
 			current_best_times = times
 			habit_itin = itin

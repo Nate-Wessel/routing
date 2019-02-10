@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 import db, config
 
 class Path:
@@ -119,4 +119,10 @@ class Itinerary(Path):
 		"""Return the total walking distance in meters"""
 		walks = re.findall('(?<=w)\d+',self.otp_string)
 		return sum([int(walk) for walk in walks])
+
+	@property
+	def walk_time(self):
+		"""End to end walk time, None if this is not a walking-only itinerary."""
+		if not self.is_walking: return None
+		return timedelta(seconds=self.total_walk_distance/config.walk_speed)
 
