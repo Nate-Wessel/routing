@@ -50,54 +50,40 @@ def habitual_times(OD):
 
 def realtime_times(OD):
 	"""Try to minimize initial wait times by taking the next-departing 
-	itinerary. Can potentially walk if nothing coming."""
-	walk_option = False
+	itinerary. May walk if walking is shorter than waiting."""
+	walk_time = None
 	possible_trips = []
 	for itin in OD.alter_itins():
-		if itin.is_walking:
-			walk_option = True
-			# don't look up a walking trip - we already know the travel time
-			seconds_walking = itin.total_walk_distance / config.walk_speed
-			walk_time = dt.timedelta(seconds=seconds_walking)
-		else:
-			# not a walking itinerary
-			trips = itin.get_trips()
-			possible_trips.extend(trips)
-	# now that we have trips from all itineraries
-	if walk_option and len(OD.alter_itins()) == 1:
-		return [ walk_time ]
+		if not walk_time and itin.is_walking: 
+			walk_time = itin.walk_time
+		else: # itin has transit
+			possible_trips.extend( itin.get_trips() )
+	# if we have only walking, then all trips will be walking, full stop
+	if walk_time and len(OD.alter_itins()) == 1:
+		return triptools.trips2times([],walk_time)
 	triptools.clip_trips_to_window(possible_trips)
-	#  triptools.remove_premature_departures(possible_trips)
-	if walk_option and len(OD.alter_itins()) > 1:
-		return triptools.trips2times(possible_trips,walk_time)
-	else:
-		return triptools.trips2times(possible_trips)
+	# the following commented line is the only difference between this and any-route
+	# triptools.remove_premature_departures(possible_trips)
+	return triptools.trips2times(possible_trips,walk_time)
 
 
 def route_indifferent_times(OD):
 	"""Return a set of sampled travel times which are as fast as possible, and 
-	indifferent to route choice. This is the null hypothesis essentially."""
+	indifferent to route choice. This is the status quoue."""
+	walk_time = None
 	possible_trips = []
-	walk_option = False
 	for itin in OD.alter_itins():
-		# there should only be <= 1 walk option per OD
-		if itin.is_walking:
-			walk_option = True
-			# don't look up a walking trip - we already know the travel time
-			seconds_walking = itin.total_walk_distance / config.walk_speed
-			walk_time = dt.timedelta(seconds=seconds_walking)
-		else: # not a walking itinerary
-			trips = itin.get_trips()
-			possible_trips.extend(trips)
-	# now that we have trips from all itineraries
-	if walk_option and len(OD.alter_itins()) == 1:
-		return [ walk_time ]
+		if not walk_time and itin.is_walking: 
+			walk_time = itin.walk_time
+		else: # itin has transit
+			possible_trips.extend( itin.get_trips() )
+	# if we have only walking, then all trips will be walking, full stop
+	if walk_time and len(OD.alter_itins()) == 1:
+		return triptools.trips2times([],walk_time)
 	triptools.clip_trips_to_window(possible_trips)
+	# the following line is the only difference between this and realtime
 	triptools.remove_premature_departures(possible_trips)
-	if walk_option and len(OD.alter_itins()) > 1:
-		return triptools.trips2times(possible_trips,walk_time)
-	else:
-		return triptools.trips2times(possible_trips)
+	return triptools.trips2times(possible_trips,walk_time)
 
 
 def mean_travel_time(departure_list):
