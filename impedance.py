@@ -14,7 +14,8 @@ class Departure:
 		return self.departure_time.timestamp()
 	@property
 	def minutes_travel(self):
-		return round( self.travel_time.total_seconds()/60, 3 )
+		if self.travel_time:
+			return round( self.travel_time.total_seconds()/60, 3 )
 	@property
 	def departure_hour(self):
 		return self.departure_time.hour
