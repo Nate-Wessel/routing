@@ -6,9 +6,9 @@ d$jf = d$depart # jf = join field
 colors = c('navyblue','salmon','aquamarine3')
 letters = c('a','b','c')
 itins = c(
-	'{w137,s3177,r47,s3184,w57,s14477,r2,s14482,w828}',
-	'{w842,s9600,r306,s9614,w584}',
-	'{w137,s3177_,r47,s3179_,w119,s9600,r506,s9614,w584}'
+	'{w134,s3177,r47,s3184,w57,s14477,r2,s14482,w828}',
+	'{w838,s9600,r506,s9614,w583}',
+	'{w134,s3177,r47,s3180,w54,s9600,r506,s9614,w583}'
 )
 
 # make table of minutes spanning day
