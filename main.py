@@ -33,6 +33,7 @@ with open('data/summary.csv','w+') as f1, open('data/all_times.csv','w+') as f2:
 				'sched_it_n':len(od.alter_itins('sched')),
 				'retro_it_n':len(od.alter_itins('retro'))
 			})
+			od_writer.flush()
 			# calculate travel times for the OD
 			habit_times = od.travel_times('habit')
 			real_times = od.travel_times('real')
