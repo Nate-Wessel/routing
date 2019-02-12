@@ -34,7 +34,8 @@ def habitual_times(OD):
 	travellers consistently take the itinerary which minimizes mean travel
 	time."""
 	habit_itin = None
-	current_best_times = [Departure(dt.datetime(2017,1,1),dt.timedelta(days=99))]
+	worst_case = Departure(dt.datetime(2017,1,1),dt.timedelta(days=9999))
+	current_best_times = [ worst_case ]
 	# look up times on all viable itineraries, keeping the best times
 	for itin in OD.alter_itins('retro'):
 		trips = itin.get_trips()
