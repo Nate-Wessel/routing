@@ -9,7 +9,7 @@ from OD import OD
 # open files for writing output
 with open('data/summary.csv','w+') as f1, open('data/all_times.csv','w+') as f2:
 	# OD level outputs
-	fieldnames = [ 'i','o','d','azimuth','arc','sched_ent','retro_ent',
+	fieldnames = [ 'i','o','d','azimuth','arc','weight','sched_ent','retro_ent',
 		'sched_it_n','retro_it_n' ]
 	od_writer = csv.DictWriter(f1,fieldnames=fieldnames)
 	od_writer.writeheader()
@@ -27,7 +27,7 @@ with open('data/summary.csv','w+') as f1, open('data/all_times.csv','w+') as f2:
 			# add attributes to output file
 			od_writer.writerow({
 				'i':r['i'], 'o':r['o'], 'd':r['d'],
-				'azimuth':r['azimuth'], 'arc':r['arc'],
+				'azimuth':r['azimuth'], 'arc':r['arc'], 'weight':r['weight'],
 				'sched_ent':od.sched_entropy,
 				'retro_ent':od.retro_entropy,
 				'sched_it_n':len(od.alter_itins('sched')),
