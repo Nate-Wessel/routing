@@ -20,7 +20,7 @@ with open('data/summary.csv','w+') as f1, open('data/all_times.csv','w+') as f2:
 	times_writer.writeheader()
 
 	# read input from a file
-	with open('data/1k_od_sample.csv') as f3:
+	with open('data/sampled-ODs/1k.csv') as f3:
 		reader = csv.DictReader(f3)
 		for r in reader:
 			# construct the OD
