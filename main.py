@@ -7,7 +7,8 @@ import config
 from OD import OD
 
 # open files for writing output
-with open('data/summary.csv','w+') as f1, open('data/all_times.csv','w+') as f2:
+with open('data/untracked/summary.csv','w+') as f1, \
+	open('data/untracked/all_times.csv','w+') as f2:
 	# OD level outputs
 	fieldnames = [ 'i','o','d','azimuth','arc','o_area','d_area',
 		'sched_ent','retro_ent',
@@ -20,9 +21,11 @@ with open('data/summary.csv','w+') as f1, open('data/all_times.csv','w+') as f2:
 	times_writer.writeheader()
 
 	# read input from a file
+	line_num = 0
 	with open('data/sampled-ODs/1k.csv') as f3:
 		reader = csv.DictReader(f3)
 		for r in reader:
+			line_num += 1 
 			# construct the OD
 			od = OD( r['o'], r['d'] )
 			# add attributes to output file
@@ -40,8 +43,17 @@ with open('data/summary.csv','w+') as f1, open('data/all_times.csv','w+') as f2:
 			habit_times = od.travel_times('habit')
 			real_times = od.travel_times('real')
 			any_times = od.travel_times('any')
+			assert len(habit_times) == len(real_times) == len(any_times)
 			i = 0
 			while i < len(habit_times):
+				# all departure times should line up
+				assert habit_times[i].departure_time == real_times[i].departure_time
+				assert real_times[i].departure_time == any_times[i].departure_time
+				# any_time should be equal or lower than others
+				if habit_times[i].travel_time:
+					assert habit_times[i].travel_time >= any_times[i].travel_time
+				if real_times[i].travel_time:
+					assert real_times[i].travel_time >= any_times[i].travel_time
 				times_writer.writerow({
 					'o':r['o'], 'd':r['d'],
 					'departure':habit_times[i].unix_departure,
@@ -51,3 +63,7 @@ with open('data/summary.csv','w+') as f1, open('data/all_times.csv','w+') as f2:
 					'any':any_times[i].minutes_travel
 				})
 				i += 1
+			print(od)
+			if line_num > 1:
+				break
+		

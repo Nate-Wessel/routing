@@ -26,17 +26,12 @@ def trips2times(trips,upper_bound=None):
 		i = 0
 		while time < end_time: # While still in the time window
 			# move the trip index up to the present time if necessary
-			while i < len(trips) and trips[i].depart <= time: 
+			while i < len(trips) and trips[i].depart <= time:  
 				i += 1
-			# check that we still have trips
-			if i >= len(trips): 
-				travel_time = upper_bound # can be None
-			else: 
-				travel_time = trips[i].arrive - time
-				if upper_bound and travel_time > upper_bound: 
-					travel_time = upper_bound
-			# append and increment
-			departures.append( Departure(time,travel_time) )
+			# we still have trips
+			if i < len(trips): departures.append( Departure(time,trips[i]) )
+			# we've run out of trips
+			else: departures.append( Departure(time) )
 			time += timedelta(minutes=1)
 		day += timedelta(days=1)
 	return departures
@@ -63,20 +58,28 @@ def clip_trips_to_window(trips):
 
 
 def remove_premature_departures(trips):
-	"""If a trip departs earlier but gets in later than another trip it is 
-	suboptimal and needs to be removed."""
-	starting_length = len(trips)
-	# Sort by arrival, then search for trips not also sorted by departure
+	"""Trade waiting time for travel time, removing trips departing earlier than 
+	need be for a given arrival. Modifies trips list in place. 
+	   _depart------------arrive
+		__depart--------------arrive
+		__depart----------------arrive      <- remove
+		_________depart----------arrive
+		____depart------------------arrive  <- remove """
+	# sort ascending by arrival 
+	# then iteratively remove trips not also sorted by departure
+	starting_length = len(trips) # for logging
+	#
 	trips.sort(key = lambda x: x.arrive_ts) # arrival, first to last
-	fully_sorted = False # starting assumption
-	while not fully_sorted:
-		for i, trip in enumerate(trips):
-			# if departure is before that of earlier-arriving trip
-			if i > 0 and trip.depart_ts <= trips[i-1].depart_ts:
-				trips.pop(i)
-				continue
-		fully_sorted = True 
-	#print('\t',starting_length - len(trips),'suboptimal trips removed')
+	i = 1
+	while i < len(trips):
+		# if departure is before that of earlier-arriving trip
+		if trips[i].depart_ts <= trips[i-1].depart_ts: 
+			trips.pop(i)
+			continue
+		i+=1
+	# there should be no simultaneous departures
+	assert len(set([t.depart_ts for t in trips])) == len(trips)
+	#print(starting_length-len(trips),'suboptimal trips removed from',starting_length)
 
 
 def summarize_paths(trips):
