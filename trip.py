@@ -21,8 +21,8 @@ class Trip:
 		self.time_before = 0 # time from previous fastest trip
 
 	def __repr__(self):
-		"""just print the departure time"""
-		return str( self.depart.time() )
+		return '\tTrip=depart:{},arrive:{},via:{}'.format(
+			self.depart.time(), self.arrive.time(), self.path )
 
 	@property
 	def duration(self):
