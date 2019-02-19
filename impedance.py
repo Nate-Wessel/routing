@@ -10,7 +10,11 @@ class Departure:
 		self.trip = trip
 
 	def __repr__(self):
-		return 'dep: '+str(self.departure_time.time())+' trip: '+str(self.trip)
+		rep = 'from:{}'.format(self.departure_time.time())
+		if self.trip:
+			rep += ',depart at:{}'.format(self.trip.depart.time())
+			rep += ',arrive at:{}\n'.format(self.trip.arrive.time())
+		return rep
 
 	@property
 	def unix_departure(self):
