@@ -126,3 +126,15 @@ class Itinerary(Path):
 		if not self.is_walking: return None
 		return timedelta(seconds=self.total_walk_distance/config.walk_speed)
 
+	@property
+	def walk_times(self):
+		"""Return time (seconds) required for each walk leg. This is used directly 
+		only in the db module."""
+		walk_times = []
+		# check for explicit walk segments OR stops with no intermediate walk
+		matches = re.findall('w\d+|r\d+,[s\d+,]+(?=r)',self.otp_string)
+		for m in matches:
+			if m[0] == 'w': walk_times.append( int(m[1:]) / config.walk_speed )
+			else: walk_times.append( 5 ) # +5s for no-walking transfer
+		return walk_times
+

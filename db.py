@@ -52,63 +52,55 @@ def all_itinerary_trips(itin):
 		return []
 	# query can take more than a second
 	c = cursor()
-	c.execute(
-		"""
-			WITH RECURSIVE sub(depth,trips,routes,departure,arrival) AS (
-
-				SELECT 
-					1 AS depth,
-					ARRAY[t.trip_id] AS trips,
-					ARRAY[t.route_id] AS routes,
-					st1.etime AS departure,
-					st2.etime AS arrival_time
-				FROM ttc_stop_times AS st1
-					JOIN ttc_trips AS t
-						ON t.trip_id = st1.trip_id
-					JOIN ttc_stop_times AS st2
-						ON t.trip_id = st2.trip_id 
-					WHERE 
-						st1.stop_uid = (%(o_stops)s)[1] AND
-						st2.stop_uid = (%(d_stops)s)[1] AND
-						st1.stop_sequence < st2.stop_sequence AND
-						-- departure is within time window
-						st1.local_time BETWEEN 
-							%(window_start)s::time AND 
-							%(window_end)s::time
-						
-				UNION
-				
-				SELECT depth, trips, routes, departure, arrival
-				FROM (
-					SELECT 
-						sub.depth+1 AS depth,
-						sub.trips || t.trip_id AS trips,
-						sub.routes || t.route_id::varchar AS routes,
-						sub.departure,
-						st2.etime AS arrival,
-						row_number() OVER (PARTITION BY sub.trips ORDER BY st1.etime, st2.etime ASC)
-					FROM sub, ttc_stop_times AS st1
-					JOIN ttc_trips AS t
-						ON t.trip_id = st1.trip_id
-					JOIN ttc_stop_times AS st2
-						ON t.trip_id = st2.trip_id 
-					WHERE 
-						st1.stop_uid = (%(o_stops)s)[sub.depth+1] AND
-						st1.etime >= sub.arrival AND
-						st1.etime < sub.arrival + 3600 AND
-						st2.stop_uid = (%(d_stops)s)[sub.depth+1] AND
-						st1.stop_sequence < st2.stop_sequence
-				) AS whatev
-				WHERE row_number = 1
-			)
+	c.execute("""
+		WITH RECURSIVE sub(depth,trips,departure,arrival) AS (
 			SELECT 
-				--trips, routes, 
-				departure, arrival
-			FROM sub
-			WHERE depth = %(final_depth)s;
-		""", { 
+				1 AS depth,
+				ARRAY[t.trip_id] AS trips,
+				(%(walk_times)s)[1] + st1.etime AS departure,
+				st2.etime + (%(walk_times)s)[2] AS arrival_time
+			FROM ttc_stop_times AS st1
+				JOIN ttc_trips AS t
+					ON t.trip_id = st1.trip_id
+				JOIN ttc_stop_times AS st2
+					ON t.trip_id = st2.trip_id 
+				WHERE 
+					st1.stop_uid = (%(o_stops)s)[1] AND
+					st2.stop_uid = (%(d_stops)s)[1] AND
+					st1.stop_sequence < st2.stop_sequence AND
+					-- departure is within time window
+					st1.local_time BETWEEN 
+						%(window_start)s::time AND %(window_end)s::time
+						
+			UNION
+				
+			SELECT depth, trips, departure, arrival
+			FROM (
+				SELECT 
+					sub.depth + 1 AS depth,
+					sub.trips || t.trip_id AS trips,
+					sub.departure,
+					st2.etime + (%(walk_times)s)[sub.depth+2] AS arrival,
+					row_number() OVER (PARTITION BY sub.trips ORDER BY st1.etime, st2.etime ASC)
+				FROM sub, ttc_stop_times AS st1
+				JOIN ttc_trips AS t
+					ON t.trip_id = st1.trip_id
+				JOIN ttc_stop_times AS st2
+					ON t.trip_id = st2.trip_id 
+				WHERE 
+					st1.stop_uid = (%(o_stops)s)[sub.depth+1] AND
+					st1.etime >= sub.arrival AND
+					st1.etime < sub.arrival + 3600 AND
+					st2.stop_uid = (%(d_stops)s)[sub.depth+1] AND
+					st1.stop_sequence < st2.stop_sequence
+			) AS whatev
+			WHERE row_number = 1
+		)
+		SELECT departure, arrival FROM sub WHERE depth = %(final_depth)s;""",
+		{ 
 			'o_stops':itin.o_stops,
 			'd_stops':itin.d_stops,
+			'walk_times':itin.walk_times,
 			'final_depth':len(itin.routes),
 			'window_start':str(config.window_start_time),
 			'window_end':str(config.window_end_time)
@@ -116,6 +108,9 @@ def all_itinerary_trips(itin):
 	)
 	trips = []
 	for depart, arrive in c.fetchall():
+		if not arrive:
+			print('failed departure',itin.walk_times,itin)
+			break
 		trips.append( trip.Trip(depart,arrive,itin.otp_string) )
 	return trips
 
