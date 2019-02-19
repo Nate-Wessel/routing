@@ -57,42 +57,42 @@ def all_itinerary_trips(itin):
 			SELECT 
 				1 AS depth,
 				ARRAY[t.trip_id] AS trips,
-				(%(walk_times)s)[1] + st1.etime AS departure,
-				st2.etime + (%(walk_times)s)[2] AS arrival_time
-			FROM ttc_stop_times AS st1
+				orig.etime - (%(walk_times)s)[1] AS departure,
+				dest.etime + (%(walk_times)s)[2] AS arrival
+			FROM ttc_stop_times AS orig
 				JOIN ttc_trips AS t
-					ON t.trip_id = st1.trip_id
-				JOIN ttc_stop_times AS st2
-					ON t.trip_id = st2.trip_id 
+					ON t.trip_id = orig.trip_id
+				JOIN ttc_stop_times AS dest
+					ON t.trip_id = dest.trip_id 
 				WHERE 
-					st1.stop_uid = (%(o_stops)s)[1] AND
-					st2.stop_uid = (%(d_stops)s)[1] AND
-					st1.stop_sequence < st2.stop_sequence AND
+					orig.stop_uid = (%(o_stops)s)[1] AND
+					dest.stop_uid = (%(d_stops)s)[1] AND
+					orig.stop_sequence < dest.stop_sequence AND
 					-- departure is within time window
-					st1.local_time BETWEEN 
+					orig.local_time - (interval '1 second' * (%(walk_times)s)[1] ) BETWEEN 
 						%(window_start)s::time AND %(window_end)s::time
 						
 			UNION
-				
+			
 			SELECT depth, trips, departure, arrival
 			FROM (
 				SELECT 
 					sub.depth + 1 AS depth,
 					sub.trips || t.trip_id AS trips,
 					sub.departure,
-					st2.etime + (%(walk_times)s)[sub.depth+2] AS arrival,
-					row_number() OVER (PARTITION BY sub.trips ORDER BY st1.etime, st2.etime ASC)
-				FROM sub, ttc_stop_times AS st1
+					dest.etime + (%(walk_times)s)[sub.depth+2] AS arrival,
+					row_number() OVER (PARTITION BY sub.trips ORDER BY orig.etime, dest.etime ASC)
+				FROM sub, ttc_stop_times AS orig
 				JOIN ttc_trips AS t
-					ON t.trip_id = st1.trip_id
-				JOIN ttc_stop_times AS st2
-					ON t.trip_id = st2.trip_id 
+					ON t.trip_id = orig.trip_id
+				JOIN ttc_stop_times AS dest
+					ON t.trip_id = dest.trip_id 
 				WHERE 
-					st1.stop_uid = (%(o_stops)s)[sub.depth+1] AND
-					st1.etime >= sub.arrival AND
-					st1.etime < sub.arrival + 3600 AND
-					st2.stop_uid = (%(d_stops)s)[sub.depth+1] AND
-					st1.stop_sequence < st2.stop_sequence
+					orig.stop_uid = (%(o_stops)s)[sub.depth+1] AND
+					dest.stop_uid = (%(d_stops)s)[sub.depth+1] AND
+					orig.etime >= sub.arrival AND
+					orig.etime < sub.arrival + 3600 AND
+					orig.stop_sequence < dest.stop_sequence
 			) AS whatev
 			WHERE row_number = 1
 		)
@@ -108,9 +108,6 @@ def all_itinerary_trips(itin):
 	)
 	trips = []
 	for depart, arrive in c.fetchall():
-		if not arrive:
-			print('failed departure',itin.walk_times,itin)
-			break
 		trips.append( trip.Trip(depart,arrive,itin.otp_string) )
 	return trips
 
