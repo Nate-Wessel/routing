@@ -80,7 +80,7 @@ class OD:
 			return mean( [ impedance.negexp(dep) for dep in departures if dep.travel_time ] )
 		elif kind in ['any_plausible','any','a']:
 			# any route getting optimality 5%+ of the time can be used optimally
-			departures = impedance.route_indifferent_times(self)
+			departures = impedance.optimal_times(self)
 			return mean( [ impedance.negexp(dep) for dep in departures if dep.travel_time] )
 		elif kind in ['realtime','real','rt','r']:
 			departures = impedance.realtime_times(self)
@@ -96,7 +96,7 @@ class OD:
 			return impedance.habitual_times(self)
 		elif kind in ['any','a']:
 			# any route getting optimality 5%+ of the time can be used optimally
-			return impedance.route_indifferent_times(self)
+			return impedance.optimal_times(self)
 		elif kind in ['realtime','real','rt','r']:
 			return impedance.realtime_times(self)
 		else: 

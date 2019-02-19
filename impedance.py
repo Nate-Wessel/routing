@@ -45,7 +45,7 @@ def habitual_times(OD):
 			current_best_times = times
 			habit_itin = itin
 	if habit_itin:
-		print('habit itin:',habit_itin)
+		#print('habit itin:',habit_itin)
 		return current_best_times
 
 
@@ -68,23 +68,23 @@ def realtime_times(OD):
 	return triptools.trips2times(possible_trips,walk_time)
 
 
-def route_indifferent_times(OD):
+def optimal_times(OD):
 	"""Return a set of sampled travel times which are as fast as possible, and 
-	indifferent to route choice. This is the status quoue."""
+	indifferent to route choice. This is the status quo."""
 	walk_time = None
-	possible_trips = []
+	all_possible_trips = []
 	for itin in OD.alter_itins():
 		if not walk_time and itin.is_walking: 
 			walk_time = itin.walk_time
 		else: # itin has transit
-			possible_trips.extend( itin.get_trips() )
+			all_possible_trips.extend( itin.get_trips() )
 	# if we have only walking, then all trips will be walking, full stop
 	if walk_time and len(OD.alter_itins()) == 1:
 		return triptools.trips2times([],walk_time)
-	triptools.clip_trips_to_window(possible_trips)
+	triptools.clip_trips_to_window(all_possible_trips)
 	# the following line is the only difference between this and realtime
-	triptools.remove_premature_departures(possible_trips)
-	return triptools.trips2times(possible_trips,walk_time)
+	triptools.remove_premature_departures(all_possible_trips)
+	return triptools.trips2times(all_possible_trips,walk_time)
 
 
 def mean_travel_time(departure_list):
