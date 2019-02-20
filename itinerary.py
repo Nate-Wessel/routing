@@ -37,6 +37,12 @@ class Path:
 		"""Stop IDs in sequence as a string. Used for comarison."""
 		return ';'.join( re.findall('(?<=s)\d+',self.otp_string) )
 
+	@property
+	def first_walk_duration(self):
+		"""How long should the first walking segment take - returns a timedelta."""
+		meters = int(re.search('(?<=w)\d+',self.otp_string).group())
+		return timedelta( seconds=( meters / config.walk_speed ) )
+
 
 class Itinerary(Path):
 	"""Characterizes a typical strategy common to trips on an OD."""

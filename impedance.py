@@ -39,6 +39,17 @@ class Departure:
 		if self.trip:
 			return self.trip.arrive - self.departure_time
 
+	@property
+	def wait_duration(self):
+		"""time spent waiting to depart, not including walking"""
+		if self.trip:
+			return self.trip.depart - self.departure_time
+		
+	@property
+	def minutes_before_boarding(self):
+		"""time spent waiting or walking before boarding the first vehicle"""
+		td = self.trip.first_boarding_time - self.departure_time
+		return round(td.total_seconds()/60.,3)
 
 #def cum(td,theta=45):
 #	"""Cumulative accessibility function. Accepts a timedelta and returns a 

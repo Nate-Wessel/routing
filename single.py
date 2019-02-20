@@ -9,8 +9,8 @@ print( od )
 
 # get the travel times for the top itineraries and put them in a CSV
 
-# column names
-col_names = list('abcdefghijklmnopqrstuvwxyz')
+# lettered column names
+col_names = list('abcdefghijklmnopqrstuvwxyz')[0:len(od.alter_itins())]
 
 # write all trips for the top itineraries to a file
 with open('data/output/12->316-trips.csv','w') as outfile:
@@ -20,15 +20,21 @@ with open('data/output/12->316-trips.csv','w') as outfile:
 	for i, itin in enumerate(od.alter_itins()):
 		outfile.write('{}: {}\n'.format(col_names[i],itin))
 	# give a linebreak and start the CSV
-	header = '\ndepart,'+','.join( col_names[0:len(od.alter_itins())] )
+	header = '\ndepart,'
+	header += ','.join(['{},{}_pre_board'.format(l,l) for l in col_names])
+	
 	outfile.write(header)
-	unformatted_row = '\n'+','.join( ['{}'] * ( 1 + len( od.alter_itins() ) ) )
 	# build out a 2d list of travel times for each itinerary
 	travel_times = []
 	for itin in od.alter_itins():
 		trips = itin.get_trips()
 		travel_times.append(triptools.trips2times(trips))
-	# for each departure time, print the travel times
+	# for each departure time, give the travel and pre-boarding times
 	for depth, departure in enumerate(travel_times[0]):
+		# calculate 
 		times = [ str(itin[depth].minutes_travel) for itin in travel_times ]
-		outfile.write( '\n'+str(departure.unix_departure)+','+','.join(times) )
+		waits = [ str(itin[depth].minutes_before_boarding) for itin in travel_times ]
+		# flatten times and waits
+		out = [ str(item) for sublist in zip(times,waits) for item in sublist ]
+		# write 
+		outfile.write( '\n'+str(departure.unix_departure)+','+','.join(out) )

@@ -29,6 +29,12 @@ class Trip:
 		"""duration of trip as timedelta"""
 		return self.arrive - self.depart
 
+	@property
+	def first_boarding_time(self):
+		"""time that the first vehicle would be boarded if any"""
+		return self.depart + self.path.first_walk_duration
+		
+
 # TODO just roping this off for a moment instead of refactoring it now
 #	def verify(self):
 #		"""Try to verify that this trip, or something close to it, exists in the 
