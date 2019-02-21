@@ -69,14 +69,12 @@ class Itinerary(Path):
 			departures = [ d for d in self.departures if d.travel_time ]
 			seconds = [ d.travel_time.total_seconds() for d in departures ]
 			mean_seconds = sum(seconds) / len(seconds)
-			assert 0 < mean_seconds < 20*3600 # TODO make this more strict
 			self.DB_mean_travel_time = timedelta(seconds=mean_seconds)
 		return self.DB_mean_travel_time
 
 	@property
 	def departures(self):
 		"""Departures in the time window using only this itinerary."""
-		# TODO don't connect with trips in next day/date
 		# pull it out of memory if we've already got this
 		if not self.DB_departures:
 			from triptools import sample_times
