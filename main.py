@@ -7,7 +7,7 @@ import config
 from OD import OD
 
 # open files for writing output
-with open('data/untracked/summary.csv','w+') as f1, \
+with open('data/output/summary.csv','w+') as f1, \
 	open('data/untracked/all_times.csv','w+') as f2:
 	# OD level outputs
 	fieldnames = [ 'i','o','d','azimuth','arc','o_area','d_area',
@@ -63,7 +63,5 @@ with open('data/untracked/summary.csv','w+') as f1, \
 					'any':any_times[i].minutes_travel
 				})
 				i += 1
-			print(od)
-			if line_num > 1:
-				break
+			print(line_num,':',od)
 		
