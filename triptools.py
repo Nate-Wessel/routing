@@ -6,6 +6,26 @@ from impedance import Departure
 
 # MANIPULATION OF TRIP VECTORS
 
+def sample_times():
+	"""Return a list of moments within the configured time window from which 
+	travel times will be measured. Returns a list of datetimes."""
+	the_times = []
+	day = config.window_start_date
+	while day <= config.window_end_date:
+		# times from start of window on day to end of window 
+		time = config.tz.localize( datetime.combine( 
+			day, config.window_start_time 
+		) )
+		end_time = config.tz.localize( datetime.combine( 
+			day, config.window_end_time 
+		) )
+		while time < end_time: # While still in the time window
+			the_times.append( time )
+			time += timedelta(minutes=1)
+		day += timedelta(days=1)
+	return the_times
+
+
 def trips2times(trips,upper_bound=None):
 	"""Take a vector of trips and return a vector of sampled travel times. 
 	Upper bound is used for limiting times by e.g. a worst case walking 
@@ -14,26 +34,17 @@ def trips2times(trips,upper_bound=None):
 	departures = []
 	# ensure trips are sorted by departure, ASC
 	trips.sort(key = lambda x: x.depart_ts)
-	# consider all days in time window
-	day = config.window_start_date
-	while day <= config.window_end_date:
-		# times from start of window on day to end of window 
-		time = config.tz.localize( datetime.combine( 
-			day, config.window_start_time ) )
-		end_time = config.tz.localize( datetime.combine( 
-			day, config.window_end_time ) )
-		# iterate over minutes looking for arrival of next-departing trip
-		i = 0
-		while time < end_time: # While still in the time window
-			# move the trip index up to the present time if necessary
-			while i < len(trips) and trips[i].depart <= time:  
-				i += 1
-			# we still have trips
-			if i < len(trips): departures.append( Departure(time,trips[i]) )
-			# we've run out of trips
-			else: departures.append( Departure(time) )
-			time += timedelta(minutes=1)
-		day += timedelta(days=1)
+	# iterate over sample moments looking for arrival of next-departing trip
+	i = 0
+	for time in sample_times():
+		# move the trip index up to the present time if necessary
+		while i < len(trips) and trips[i].depart <= time: i += 1
+		# we still have trips
+		if i < len(trips): 
+			departures.append( Departure(time,trips[i]) )
+		# we've run out of trips
+		else: 
+			departures.append( Departure(time) )
 	return departures
 		
 
