@@ -96,7 +96,7 @@ def all_itinerary_trips(itin):
 			) AS whatev
 			WHERE row_number = 1
 		)
-		SELECT departure, arrival FROM sub WHERE depth = %(final_depth)s;""",
+		SELECT departure, arrival, trips FROM sub WHERE depth = %(final_depth)s;""",
 		{ 
 			'o_stops':itin.o_stops,
 			'd_stops':itin.d_stops,
@@ -107,8 +107,8 @@ def all_itinerary_trips(itin):
 		}
 	)
 	trips = []
-	for depart, arrive in c.fetchall():
-		trips.append( trip.Trip(depart,arrive,itin.otp_string) )
+	for depart, arrive, trip_ids in c.fetchall():
+		trips.append( trip.Trip(depart,arrive,itin.otp_string,trip_ids) )
 	return trips
 
 

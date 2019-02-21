@@ -5,7 +5,7 @@ import pytz
 
 class Trip:
 	"""One (shortest?) trip"""
-	def __init__(self,depart,arrive,path_string):
+	def __init__(self,depart,arrive,path_string,trip_ids=None):
 		# unix timestamps
 		self.depart_ts = float(depart)
 		self.arrive_ts = float(arrive)
@@ -16,13 +16,15 @@ class Trip:
 		self.arrive = pytz.utc.localize( 
 			dt.utcfromtimestamp(self.arrive_ts) 
 		).astimezone(config.tz)
-		# path can either be a path object or a string (from OTP script)
 		self.path = Path(path_string)
-		self.time_before = 0 # time from previous fastest trip
+		# trip_ids pulled from the database
+		self.trip_ids = trip_ids
+		# time from previous fastest trip
+		self.time_before = 0 
 
 	def __repr__(self):
-		return '\tTrip=depart:{},arrive:{},via:{}'.format(
-			self.depart.time(), self.arrive.time(), self.path )
+		return '\tTrip=depart:{},arrive:{},via:{},trips:{}'.format(
+			self.depart.time(), self.arrive.time(), self.path, self.trip_ids )
 
 	@property
 	def duration(self):
