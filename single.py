@@ -32,8 +32,8 @@ with open('data/output/12->316-trips.csv','w') as outfile:
 	# for each departure time, give the travel and pre-boarding times
 	for depth, departure in enumerate(travel_times[0]):
 		# calculate 
-		times = [ str(itin[depth].minutes_travel) for itin in travel_times ]
-		waits = [ str(itin[depth].minutes_before_boarding) for itin in travel_times ]
+		times = [ itin[depth].minutes_travel for itin in travel_times ]
+		waits = [ itin[depth].minutes_before_boarding for itin in travel_times ]
 		# flatten times and waits
 		out = [ str(item) for sublist in zip(times,waits) for item in sublist ]
 		# write 
