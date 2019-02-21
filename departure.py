@@ -34,8 +34,8 @@ class Departure:
 
 	@property
 	def travel_time(self):
-		"""timedelta travel time or none"""
-		if self.trip:
+		"""Timedelta travel time or None. Trip must be on same day as departure."""
+		if self.trip and self.trip.arrive.date() == self.departure_time.date():
 			return self.trip.arrive - self.departure_time
 
 	@property
