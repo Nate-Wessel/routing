@@ -80,7 +80,7 @@ class Itinerary(Path):
 		# pull it out of memory if we've already got this
 		if not self.DB_departures:
 			from triptools import sample_times
-			from impedance import Departure
+			from departure import Departure
 			##############
 			self.DB_departures = []
 			# ensure trips are sorted by departure, ASC

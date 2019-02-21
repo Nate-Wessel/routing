@@ -2,7 +2,7 @@ from trip import Trip
 import os, csv, time, triptools
 from datetime import datetime, timedelta
 from math import log
-import config, db, impedance
+import config, db
 from statistics import mean
 
 class OD:

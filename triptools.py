@@ -2,7 +2,7 @@ import pytz
 from datetime import datetime, timedelta
 import config
 from itinerary import Itinerary
-from impedance import Departure
+from departure import Departure
 
 # MANIPULATION OF TRIP VECTORS
 
