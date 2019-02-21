@@ -1,4 +1,3 @@
-# ACCESS AND IMPEDANCE FUNCTIONS
 import math, config, db, triptools
 import datetime as dt
 
