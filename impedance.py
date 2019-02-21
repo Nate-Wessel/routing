@@ -10,7 +10,7 @@ class Departure:
 		self.trip = trip
 
 	def __repr__(self):
-		rep = 'from:{}'.format(self.departure_time.time())
+		rep = 'Departure from:{}'.format(self.departure_time.time())
 		if self.trip:
 			rep += ',depart at:{}'.format(self.trip.depart.time())
 			rep += ',arrive at:{}\n'.format(self.trip.arrive.time())
@@ -50,67 +50,4 @@ class Departure:
 		"""time spent waiting or walking before boarding the first vehicle"""
 		td = self.trip.first_boarding_time - self.departure_time
 		return round(td.total_seconds()/60.,3)
-
-#def cum(td,theta=45):
-#	"""Cumulative accessibility function. Accepts a timedelta and returns a 
-#	binary measure. Theta is in minutes."""
-#	return 0 if td.total_seconds()/60. < theta else 1
-
-def negexp(td,beta=30):
-	"""Negative exponential distance decay function with parameter in minutes."""
-	return math.exp( -( td.travel_time.total_seconds() / 60. / beta ) )
-
-def habitual_times(OD):
-	"""Return a set of travel times over the time window for the assumption that
-	travellers consistently take the itinerary which minimizes mean travel
-	time."""
-	habit_itin = None
-	best_time = None
-	# find the best mean travel time
-	for itin in OD.alter_itins('retro'):
-		if ( (not best_time) or itin.mean_travel_time < best_time ):
-			best_time = itin.mean_travel_time
-			habit_itin = itin
-	if habit_itin:
-		return habit_itin.departures
-
-
-def realtime_times(OD):
-	"""Select an itinerary by trying to minimize the time before first boarding a
-	vehicle. Initial walking and waiting are treated indifferently. From 
-	itineraries with identical departure times (due to shared first leg), the one
-	with the better mean travel time is chosen."""
-	# get a big list of all possible trips, noting any end to end walking options	
-	walk_time = None
-	all_trips = []
-	for itin in OD.alter_itins():
-		if not walk_time and itin.is_walking: 
-			walk_time = itin.walk_time
-		else: # itin has transit
-			all_trips.extend( itin.get_trips() )
-	# if we have only walking, then all trips will be walking, full stop
-	if walk_time and len(OD.alter_itins()) == 1:
-		return triptools.trips2times([],walk_time)
-	triptools.clip_trips_to_window(all_trips)
-	return triptools.trips2times(all_trips,walk_time)
-
-
-def optimal_times(OD):
-	"""Return a set of sampled travel times which are as fast as possible, and 
-	indifferent to route choice. This is the status quo."""
-	walk_time = None
-	all_possible_trips = []
-	for itin in OD.alter_itins():
-		if not walk_time and itin.is_walking: 
-			walk_time = itin.walk_time
-		else: # itin has transit
-			all_possible_trips.extend( itin.get_trips() )
-	# if we have only walking, then all trips will be walking, full stop
-	if walk_time and len(OD.alter_itins()) == 1:
-		return triptools.trips2times([],walk_time)
-	triptools.clip_trips_to_window(all_possible_trips)
-	# the following line is the only difference between this and realtime
-	triptools.remove_premature_departures(all_possible_trips)
-	print('any uses ',len(all_possible_trips),'trips with walking =',walk_time)
-	return triptools.trips2times(all_possible_trips,walk_time)
 

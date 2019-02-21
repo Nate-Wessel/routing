@@ -69,16 +69,34 @@ class Itinerary(Path):
 			departures = [ d for d in self.departures if d.travel_time ]
 			seconds = [ d.travel_time.total_seconds() for d in departures ]
 			mean_seconds = sum(seconds) / len(seconds)
+			assert 0 < mean_seconds < 20*3600 # TODO make this more strict
 			self.DB_mean_travel_time = timedelta(seconds=mean_seconds)
 		return self.DB_mean_travel_time
 
 	@property
 	def departures(self):
 		"""Departures in the time window using only this itinerary."""
+		# TODO don't connect with trips in next day/date
 		# pull it out of memory if we've already got this
 		if not self.DB_departures:
-			from triptools import trips2times
-			self.DB_departures = trips2times( self.get_trips() )
+			from triptools import sample_times
+			from impedance import Departure
+			##############
+			self.DB_departures = []
+			# ensure trips are sorted by departure, ASC
+			trips = self.get_trips()
+			trips.sort(key = lambda x: x.depart_ts)
+			# iterate over sample moments looking for arrival of next-departing trip
+			i = 0
+			for time in sample_times():
+				# move the trip index up to the present time if necessary
+				while i < len(trips) and trips[i].depart <= time: i += 1
+				# we still have trips
+				if i < len(trips): 
+					self.DB_departures.append( Departure(time,trips[i]) )
+				# we've run out of trips
+				else: 
+					self.DB_departures.append( Departure(time) )
 		return self.DB_departures
 		
 

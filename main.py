@@ -40,9 +40,9 @@ with open('data/output/summary.csv','w+') as f1, \
 			})
 			f1.flush()
 			# calculate travel times for the OD
-			habit_times = od.travel_times('habit')
-			real_times = od.travel_times('real')
-			any_times = od.travel_times('any')
+			habit_times = od.habit_departures
+			real_times = od.realtime_departures
+			any_times = od.optimal_departures
 			assert len(habit_times) == len(real_times) == len(any_times)
 			i = 0
 			while i < len(habit_times):
@@ -51,6 +51,7 @@ with open('data/output/summary.csv','w+') as f1, \
 				assert real_times[i].departure_time == any_times[i].departure_time
 				# any_time should be equal or lower than others
 				if habit_times[i].travel_time:
+					assert any_times[i].travel_time
 					assert habit_times[i].travel_time >= any_times[i].travel_time
 				if real_times[i].travel_time:
 					assert real_times[i].travel_time >= any_times[i].travel_time

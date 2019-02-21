@@ -71,39 +71,60 @@ class OD:
 		triptools.remove_premature_departures(trips)
 		return trips
 
-	def access(self,kind='habitual'):
-		"""Return an average access score based on the given accessibility 
-		metric"""
-		if kind in ['habitual','h','H']:
-			# always take the itinerary that results in lowest average travel times
-			departures = impedance.habitual_times(self)
-			return mean( [ impedance.negexp(dep) for dep in departures if dep.travel_time ] )
-		elif kind in ['any_plausible','any','a']:
-			# any route getting optimality 5%+ of the time can be used optimally
-			departures = impedance.optimal_times(self)
-			return mean( [ impedance.negexp(dep) for dep in departures if dep.travel_time] )
-		elif kind in ['realtime','real','rt','r']:
-			departures = impedance.realtime_times(self)
-			return mean( [ impedance.negexp(dep) for dep in departures if dep.travel_time] )
-		else: 
-			print('invalid access type supplied')
-			assert False
+	@property
+	def optimal_departures(self):
+		"""Return a set of sampled travel times which are as fast as possible, and 
+		indifferent to route choice. This is the status quo."""
+		walk_time = None
+		all_trips = []
+		for itin in self.alter_itins():
+			if not walk_time and itin.is_walking: 
+				walk_time = itin.walk_time
+			else: # itin has transit
+				all_trips.extend( itin.get_trips() )
+		# if we have only walking, then all trips will be walking, full stop
+		if walk_time and len(self.alter_itins()) == 1:
+			return triptools.trips2times([],walk_time)
+		#triptools.clip_trips_to_window(all_trips) # TODO this was causing issues
+		triptools.remove_premature_departures(all_trips)
+		departures = triptools.trips2times(all_trips,walk_time)
+		return departures
 
-	def travel_times(self,kind='habit'):
-		"""Return a set of travel times based on the given accessibility metric"""
-		if kind in ['habitual','habit','hab','h']:
-			# always take the itinerary that results in lowest average travel times
-			return impedance.habitual_times(self)
-		elif kind in ['any','a']:
-			# any route getting optimality 5%+ of the time can be used optimally
-			return impedance.optimal_times(self)
-		elif kind in ['realtime','real','rt','r']:
-			return impedance.realtime_times(self)
-		else: 
-			print('invalid access type supplied')
-			assert False
-
-	# here be some simplifying properties/methods
+	@property
+	def habit_departures(self):
+		"""Return a set of travel times over the time window for the assumption 
+		that travellers consistently take the itinerary which minimizes mean 
+		travel time."""
+		habit_itin = None
+		best_time = None
+		# find the best mean travel time
+		for itin in self.alter_itins():
+			if ( (not best_time) or itin.mean_travel_time < best_time ):
+				best_time = itin.mean_travel_time
+				habit_itin = itin
+		if habit_itin:
+			return habit_itin.departures
+	
+	@property
+	def realtime_departures(self):
+		"""Select an itinerary by trying to minimize the time before first 
+		boarding a vehicle. Initial walking and waiting are treated indifferently. 
+		From itineraries with identical departure times (due to shared first leg), 
+		the one with the better mean travel time is chosen."""
+		# get a big list of all possible trips, noting any end to end walking options	
+		walk_time = None
+		all_trips = []
+		for itin in self.alter_itins():
+			if not walk_time and itin.is_walking: 
+				walk_time = itin.walk_time
+			else: # itin has transit
+				all_trips.extend( itin.get_trips() )
+		# if we have only walking, then all trips will be walking, full stop
+		if walk_time and len(self.alter_itins()) == 1:
+			return triptools.trips2times([],walk_time)
+		triptools.clip_trips_to_window(all_trips)
+		departures = triptools.trips2times(all_trips,walk_time)
+		return departures
 	
 	@property
 	def sched_entropy(self):
