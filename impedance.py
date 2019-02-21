@@ -114,10 +114,3 @@ def optimal_times(OD):
 	print('any uses ',len(all_possible_trips),'trips with walking =',walk_time)
 	return triptools.trips2times(all_possible_trips,walk_time)
 
-
-def mean_travel_time(departure_list):
-	"""Mean travel time from a list of departures"""
-	# convert to seconds, take the mean, return a timedelta, ignoring None's
-	sec_list = [ d.travel_time.total_seconds() for d in departure_list if d.travel_time]
-	return dt.timedelta( seconds=(sum(sec_list)/len(departure_list)) )
-
