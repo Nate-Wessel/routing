@@ -65,23 +65,22 @@ def habitual_times(OD):
 	travellers consistently take the itinerary which minimizes mean travel
 	time."""
 	habit_itin = None
-	best_times = None
-	# look up times on all viable itineraries, keeping the best times
+	best_time = None
+	# find the best mean travel time
 	for itin in OD.alter_itins('retro'):
-		trips = itin.get_trips()
-		triptools.clip_trips_to_window(trips)
-		times = triptools.trips2times(trips,itin.walk_time)
-		if ( (not best_times) or mean_travel_time(times) < mean_travel_time(best_times) ):
-			best_times = times
+		if ( (not best_time) or itin.mean_travel_time < best_time ):
+			best_time = itin.mean_travel_time
 			habit_itin = itin
 	if habit_itin:
-		#print('habit itin:',habit_itin)
-		return best_times
+		return habit_itin.departures
 
 
 def realtime_times(OD):
-	"""Try to minimize initial wait times by taking the next-departing 
-	itinerary. May walk if walking is shorter than waiting."""
+	"""Select an itinerary by trying to minimize the time before first boarding a
+	vehicle. Initial walking and waiting are treated indifferently. From 
+	itineraries with identical departure times (due to shared first leg), the one
+	with the better mean travel time is chosen."""
+	# get a big list of all possible trips, noting any end to end walking options	
 	walk_time = None
 	all_trips = []
 	for itin in OD.alter_itins():
@@ -93,9 +92,6 @@ def realtime_times(OD):
 	if walk_time and len(OD.alter_itins()) == 1:
 		return triptools.trips2times([],walk_time)
 	triptools.clip_trips_to_window(all_trips)
-	# the following commented line is the only difference between this and any-route
-	# triptools.remove_premature_departures(all_trips)
-	print('real uses',len(all_trips),'trips with walking =',walk_time)
 	return triptools.trips2times(all_trips,walk_time)
 
 
