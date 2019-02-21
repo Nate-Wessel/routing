@@ -52,12 +52,35 @@ class Itinerary(Path):
 		Path.__init__(self,path_instance.otp_string)
 		self.OTP_trips = []
 		self.DB_trips = None
+		self.DB_departures = None
+		self.DB_mean_travel_time = None
 		self.prob = 0
 
 	def __hash__(self):
 		"""This is to override the Path method only. this function is not to be 
 		used."""
 		assert False # we should not be here. 
+
+	@property
+	def mean_travel_time(self):
+		"""Mean travel time on DB trips inside the sampling window."""
+		# pull it out of memory if we have it already
+		if not self.DB_mean_travel_time:
+			departures = [ d for d in self.departures if d.travel_time ]
+			seconds = [ d.travel_time.total_seconds() for d in departures ]
+			mean_seconds = sum(seconds) / len(seconds)
+			self.DB_mean_travel_time = timedelta(seconds=mean_seconds)
+		return self.DB_mean_travel_time
+
+	@property
+	def departures(self):
+		"""Departures in the time window using only this itinerary."""
+		# pull it out of memory if we've already got this
+		if not self.DB_departures:
+			from triptools import trips2times
+			self.DB_departures = trips2times( self.get_trips() )
+		return self.DB_departures
+		
 
 	def get_trips(self):
 		"""Get all trips corresponding to this itinerary (from the database)."""

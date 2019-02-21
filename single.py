@@ -27,11 +27,9 @@ with open('data/output/12->316-trips.csv','w') as outfile:
 	# build out a 2d list of travel times for each itinerary
 	travel_times = []
 	for itin in od.alter_itins():
-		trips = itin.get_trips()
-		travel_times.append(triptools.trips2times(trips))
+		travel_times.append( itin.departures )
 	# for each departure time, give the travel and pre-boarding times
-	for depth, departure in enumerate(travel_times[0]):
-		# calculate 
+	for depth, departure in enumerate(travel_times[0]): 
 		times = [ itin[depth].minutes_travel for itin in travel_times ]
 		waits = [ itin[depth].minutes_before_boarding for itin in travel_times ]
 		# flatten times and waits
