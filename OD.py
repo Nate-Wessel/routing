@@ -1,9 +1,9 @@
-from trip import Trip
-import os, csv, time, triptools
-from datetime import datetime, timedelta
+import os, csv
 from math import log
-import config, db
-from statistics import mean
+from datetime import datetime, timedelta
+import config, db, triptools
+from trip import Trip
+from departure import Departure
 
 class OD:
 	"""An O->D pair"""
@@ -75,20 +75,31 @@ class OD:
 	def optimal_departures(self):
 		"""Return a set of sampled travel times which are as fast as possible, and 
 		indifferent to route choice. This is the status quo."""
-		walk_time = None
-		all_trips = []
+		# get all possible trips and any walking alternatives
+		departures, all_trips, walk_time = [], [], None
 		for itin in self.alter_itins():
 			if not walk_time and itin.is_walking: 
 				walk_time = itin.walk_time
 			else: # itin has transit
 				all_trips.extend( itin.get_trips() )
-		# if we have only walking, then all trips will be walking, full stop
+		# if we have only walking, then all trips will be walking
 		if walk_time and len(self.alter_itins()) == 1:
-			return triptools.trips2times([],walk_time)
-		#triptools.clip_trips_to_window(all_trips) # TODO this was causing issues
+			return [ Departure(t,None,walk_time) for t in triptools.sample_times() ]
+		# we now have only trips or trips and a walking option
 		triptools.remove_premature_departures(all_trips)
-		departures = triptools.trips2times(all_trips,walk_time)
+		# ensure trips are sorted by departure, ASC
+		optimal_trips = sorted(all_trips, key=lambda x: x.depart_ts)
+		# iterate over sample moments looking for arrival of next-departing trip
+		i = 0
+		for time in triptools.sample_times():
+			# move the trip index up to the present time if necessary
+			while i < len(optimal_trips) and optimal_trips[i].depart <= time: i += 1
+			# append departures that may or may not have trips or walk times
+			departures.append( Departure(
+				time, None if i >= len(optimal_trips) else optimal_trips[i], walk_time
+			) )
 		return departures
+
 
 	@property
 	def habit_departures(self):
@@ -122,7 +133,7 @@ class OD:
 		# if we have only walking, then all trips will be walking, full stop
 		if walk_time and len(self.alter_itins()) == 1:
 			return triptools.trips2times([],walk_time)
-		triptools.clip_trips_to_window(all_trips)
+
 		departures = triptools.trips2times(all_trips,walk_time)
 		return departures
 	
