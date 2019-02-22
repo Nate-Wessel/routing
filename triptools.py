@@ -24,28 +24,6 @@ def sample_times():
 			time += timedelta(minutes=1)
 		day += timedelta(days=1)
 	return the_times
-
-
-def trips2times(trips,upper_bound=None):
-	"""Take a vector of trips and return a vector of sampled travel times. 
-	Upper bound is used for limiting times by e.g. a worst case walking 
-	option. If trips is an empty list, but the upper bound is provided then only 
-	walk times are returned."""
-	departures = []
-	# ensure trips are sorted by departure, ASC
-	trips.sort(key = lambda x: x.depart_ts)
-	# iterate over sample moments looking for arrival of next-departing trip
-	i = 0
-	for time in sample_times():
-		# move the trip index up to the present time if necessary
-		while i < len(trips) and trips[i].depart <= time: i += 1
-		# we still have trips
-		if i < len(trips): 
-			departures.append( Departure(time,trips[i]) )
-		# we've run out of trips
-		else: 
-			departures.append( Departure(time) )
-	return departures
 		
 
 def clip_trips_to_window(trips):
