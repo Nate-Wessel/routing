@@ -66,10 +66,13 @@ class Itinerary(Path):
 		"""Mean travel time on DB trips inside the sampling window."""
 		# pull it out of memory if we have it already
 		if not self.DB_mean_travel_time:
-			departures = [ d for d in self.departures if d.travel_time ]
-			seconds = [ d.travel_time.total_seconds() for d in departures ]
-			mean_seconds = sum(seconds) / len(seconds)
-			self.DB_mean_travel_time = timedelta(seconds=mean_seconds)
+			if self.is_walking:
+				self.DB_mean_travel_time = self.walk_time
+			else:
+				departures = [ d for d in self.departures if d.travel_time ]
+				seconds = [ d.travel_time.total_seconds() for d in departures ]
+				mean_seconds = sum(seconds) / len(seconds)
+				self.DB_mean_travel_time = timedelta(seconds=mean_seconds)
 		return self.DB_mean_travel_time
 
 	@property
@@ -85,16 +88,17 @@ class Itinerary(Path):
 			trips = self.get_trips()
 			trips.sort(key = lambda x: x.depart_ts)
 			# iterate over sample moments looking for arrival of next-departing trip
+			walk_time = None if not self.is_walking else self.walk_time
 			i = 0
 			for time in sample_times():
 				# move the trip index up to the present time if necessary
 				while i < len(trips) and trips[i].depart <= time: i += 1
 				# we still have trips
 				if i < len(trips): 
-					self.DB_departures.append( Departure(time,trips[i]) )
+					self.DB_departures.append( Departure(time,trips[i],walk_time) )
 				# we've run out of trips
 				else: 
-					self.DB_departures.append( Departure(time) )
+					self.DB_departures.append( Departure(time, None, walk_time) )
 		return self.DB_departures
 		
 
