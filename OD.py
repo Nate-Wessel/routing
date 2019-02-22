@@ -123,19 +123,32 @@ class OD:
 		From itineraries with identical departure times (due to shared first leg), 
 		the one with the better mean travel time is chosen."""
 		# get a big list of all possible trips, noting any end to end walking options	
-		walk_time = None
-		all_trips = []
-		for itin in self.alter_itins():
-			if not walk_time and itin.is_walking: 
-				walk_time = itin.walk_time
-			else: # itin has transit
-				all_trips.extend( itin.get_trips() )
-		# if we have only walking, then all trips will be walking, full stop
+		departures, all_trips, walk_time = [], [], None
+		# for itineraries sorted in order of mean travel time:
+		for itin in sorted(self.alter_itins(),key=lambda i: i.mean_travel_time):
+			if not walk_time and itin.is_walking: walk_time = itin.walk_time
+			# extend right
+			else: all_trips.extend( itin.get_trips() )
+		# if we have only walking, then all trips will be walking
 		if walk_time and len(self.alter_itins()) == 1:
-			return triptools.trips2times([],walk_time)
-
-		departures = triptools.trips2times(all_trips,walk_time)
+			return [ Departure(t,None,walk_time) for t in triptools.sample_times() ]
+		# we now have only trips or trips and a walking option
+		# this is already sorted by mean itinerary travel time
+		# now also (stably) sort by departure
+		optimal_trips = sorted(all_trips, key=lambda t: t.depart_ts)
+		# iterate over sample moments looking for arrival of next-departing trip
+		i = 0
+		for time in triptools.sample_times():
+			# move the trip index up to the present time if necessary
+			# there will be entries with identical departure times and this will 
+			# take the first, which has an itinerary with a better mean travel time 
+			while i < len(optimal_trips) and optimal_trips[i].depart <= time: i += 1
+			# append departures that may or may not have trips or walk times
+			departures.append( Departure(
+				time, None if i >= len(optimal_trips) else optimal_trips[i], walk_time
+			) )
 		return departures
+
 	
 	@property
 	def sched_entropy(self):
