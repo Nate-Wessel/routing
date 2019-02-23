@@ -94,10 +94,17 @@ class OD:
 		for time in triptools.sample_times():
 			# move the trip index up to the present time if necessary
 			while i < len(optimal_trips) and optimal_trips[i].depart <= time: i += 1
-			# append departures that may or may not have trips or walk times
-			departures.append( Departure(
-				time, None if i >= len(optimal_trips) else optimal_trips[i], walk_time
-			) )
+			# no trips left or walking better option
+			if ( i >= len(optimal_trips) or (
+				walk_time and (optimal_trips[i].arrive-time) > walk_time
+			) ):
+				departures.append( Departure( time, None, walk_time ) )
+			# have trip better than walking if that was available
+			elif i < len(optimal_trips):
+				departures.append( Departure( time, optimal_trips[i] ) )
+			# no trip or attractive walking option
+			else:
+				departures.append( Departure( time ) )
 		return departures
 
 
