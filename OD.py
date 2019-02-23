@@ -141,19 +141,20 @@ class OD:
 			return [ Departure(t,None,walk_time) for t in triptools.sample_times() ]
 		# we now have only trips or trips and a walking option
 		# this is already sorted by mean itinerary travel time
-		# now also (stably) sort by departure
-		optimal_trips = sorted(all_trips, key=lambda t: t.depart_ts)
+		# now also (stably) sort by departure minus initial walk
+		trips = sorted(all_trips, key=lambda t: t.first_boarding_time)
 		# iterate over sample moments looking for arrival of next-departing trip
 		i = 0
 		for time in triptools.sample_times():
 			# move the trip index up to the present time if necessary
 			# there will be entries with identical departure times and this will 
 			# take the first, which has an itinerary with a better mean travel time 
-			while i < len(optimal_trips) and optimal_trips[i].depart <= time: i += 1
+			while i < len(trips) and trips[i].depart <= time: i += 1
 			# append departures that may or may not have trips or walk times
-			departures.append( Departure(
-				time, None if i >= len(optimal_trips) else optimal_trips[i], walk_time
-			) )
+			if i < len(trips) and walk_time and trips[i].first_boarding_time < time + walk_time:
+				departures.append( Departure( time, trips[i] ) )
+			else: 
+				departures.append( Departure( time, None, walk_time ) )
 		return departures
 
 	
