@@ -7,8 +7,8 @@ import config
 from OD import OD
 
 # open files for writing output
-with open('data/output/summary.csv','w+') as f1, \
-	open('data/untracked/all_times.csv','w+') as f2:
+with open('data/untracked/od-stats.csv','w+') as f1, \
+	open('data/untracked/times.csv','w+') as f2:
 	# OD level outputs
 	fieldnames = [ 'i','o','d','azimuth','arc','o_area','d_area',
 		'sched_ent','retro_ent',
