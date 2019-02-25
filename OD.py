@@ -150,9 +150,14 @@ class OD:
 			# there will be entries with identical departure times and this will 
 			# take the first, which has an itinerary with a better mean travel time 
 			while i < len(trips) and trips[i].depart <= time: i += 1
-			# append departures that may or may not have trips or walk times
-			if i < len(trips) and walk_time and trips[i].first_boarding_time < time + walk_time:
-				departures.append( Departure( time, trips[i] ) )
+			# we still have trips
+			if i < len(trips):
+				# if no walking or trip is better
+				if (not walk_time) or trips[i].first_boarding_time < time + walk_time:
+					departures.append( Departure( time, trips[i] ) )
+				else: # walking is the better option
+					departures.append( Departure( time, None, walk_time ) )
+			# no trips left
 			else: 
 				departures.append( Departure( time, None, walk_time ) )
 		return departures
