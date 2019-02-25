@@ -13,7 +13,7 @@ print( od )
 col_names = list('abcdefghijklmnopqrstuvwxyz')[0:len(od.alter_itins())]
 
 # write all trips for the top itineraries to a file
-with open('data/output/12->316-trips.csv','w') as outfile:
+with open('data/output/'+str(oid)+'->'+str(did)+'-trips.csv','w') as outfile:
 	# first identify the itineraries
 	outfile.write('Itineraries:\n')
 	# enumerate itinerary alternatives
