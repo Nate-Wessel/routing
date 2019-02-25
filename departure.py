@@ -25,7 +25,7 @@ class Departure:
 	@property
 	def minutes_travel(self):
 		"""travel time in minutes"""
-		if self.trip:
+		if self.trip and self.trip.arrive.date() == self.departure_time.date():
 			tt = self.trip.arrive - self.departure_time
 			return round( tt.total_seconds()/60., 3 )
 		elif self.walk_time:

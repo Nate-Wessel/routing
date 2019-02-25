@@ -83,22 +83,22 @@ class Itinerary(Path):
 			from triptools import sample_times
 			from departure import Departure
 			##############
-			self.DB_departures = []
-			# ensure trips are sorted by departure, ASC
-			trips = self.get_trips()
-			trips.sort(key = lambda x: x.depart_ts)
-			# iterate over sample moments looking for arrival of next-departing trip
-			walk_time = None if not self.is_walking else self.walk_time
-			i = 0
-			for time in sample_times():
-				# move the trip index up to the present time if necessary
-				while i < len(trips) and trips[i].depart <= time: i += 1
-				# we still have trips
-				if i < len(trips): 
-					self.DB_departures.append( Departure(time,trips[i],walk_time) )
-				# we've run out of trips
-				else: 
-					self.DB_departures.append( Departure(time, None, walk_time) )
+			if self.is_walking: # all departures are the same
+				self.DB_departures = [ 
+					Departure(time,None,self.walk_time) for time in sample_times() 
+				]
+			else: # trip based departures
+				# get trips sorted (first to last) by departure
+				trips = sorted( self.get_trips(), key=lambda t: t.depart_ts )
+				self.DB_departures, i = [], 0
+				for time in sample_times():
+					# move the trip index up to the present time if necessary
+					while i < len(trips) and trips[i].depart < time: 
+						i += 1
+					if i < len(trips): # we still have trips
+						self.DB_departures.append( Departure(time,trips[i]) )
+					else: # we've run out of trips
+						self.DB_departures.append( Departure(time,None) )
 		return self.DB_departures
 		
 
