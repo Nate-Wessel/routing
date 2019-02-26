@@ -2,11 +2,28 @@
 # read in OD level data and assign weights to observations
 #######################################
 # read in the OD pairs
-ods = read.csv('~/routing/data/untracked/am-peak-od-stats.csv')
+periods = c('am-peak','midday','pm-peak','evening')
+# periods will be weighted evenly though they have different durations: 3,6,4,3 hours 
+for( period in periods ){
+	fname = paste0('~/routing/data/untracked/',period,'-od-stats.csv')
+	if( file.exists(fname) ){
+		print(paste('reading',fname))
+		if( ! exists('ods') ){
+			ods = read.csv(fname)
+			ods$period = period
+		}else{
+			d = read.csv(fname)
+			d$period = period
+			ods = rbind(ods,d)
+			remove(d)
+		}
+	}
+}
 # name the data, remove unecessary fluff
-rownames(ods) = paste0(ods$o,'->',ods$d)
-ods$pair = factor(rownames(ods))
-ods$o = ods$d = ods$i = NULL
+#rownames(ods) = paste0(ods$o,'->',ods$d)
+ods$pair = factor(paste0(ods$o,'->',ods$d))
+ods$period = factor(ods$period)
+ods$o = ods$d = ods$i = ods$arc = NULL
 # assign weights based on areas
 ods$weight = ods$o_area * ods$d_area
 ods$weight = ods$weight / sum(ods$weight)
@@ -40,8 +57,8 @@ t$o = t$d = NULL
 # add weights by OD
 t = merge( x=t, y=ods[,c('pair','weight')], all.x=T, by='pair' )
 # add time deltas
-t$delta_hab = t$hab/t$any 
-t$delta_real = t$real/t$any
+t$delta_hab = t$hab - t$any 
+t$delta_real = t$real - t$any
 # how often are the alternatives simply equivalent?
 sum((t$any==t$hab)*t$weight,na.rm=T)/sum(t$weight)
 sum((t$any==t$real)*t$weight,na.rm=T)/sum(t$weight)
@@ -69,10 +86,13 @@ print(summary(lmr))
 library('weights')
 cairo_pdf('~/Dropbox/diss/routing/paper/figures/itinerary-count-hist.pdf',width=5,height=4)
 	breaks = seq(-0.5,10.5,1)
-	wtd.hist( ods$sched_it_n, weight=ods$weight, breaks, border=F, col=rgb(1,0,0,alpha=.50),
+	col1 = rgb(1,0,0,alpha=.50)
+	col2 = rgb(0,0,1,alpha=.25)
+	wtd.hist( ods$sched_it_n, weight=ods$weight, breaks, border=F, col=col1,
 		main='Itinerary Counts', xlab='Count', ylab='Weighted Frequency' )
-	wtd.hist( ods$retro_it_n, weight=ods$weight, breaks, border=F, col=rgb(0,0,1,alpha=.25), add=T )
-	remove(breaks)
+	wtd.hist( ods$retro_it_n, weight=ods$weight, breaks, border=F, col=col2, add=T )
+	legend(x=6,y=.25,legend=c('sched','retro'),fill=c(col1,col2),border=rgb(1,1,1,alpha=1))
+	remove(breaks,col1,col2)
 dev.off()
 
 
