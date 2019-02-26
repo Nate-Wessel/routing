@@ -31,7 +31,7 @@ with open('data/untracked/od-stats.csv','w+') as f1, \
 			# add attributes to output file
 			od_writer.writerow({
 				'i':r['i'], 'o':r['o'], 'd':r['d'],
-				'azimuth':r['azimuth'], 'arc':r['arc'], 'grid'r['grid_dist'],
+				'azimuth':r['azimuth'], 'arc':r['arc'], 'grid':r['grid_dist'],
 				'o_area':r['o_area'],'d_area':r['d_area'],
 				'sched_ent':od.sched_entropy,
 				'retro_ent':od.retro_entropy,
