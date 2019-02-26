@@ -1,26 +1,15 @@
 # read in OD level data (weighted)
 source('~/routing/anal/read-and-weight-ods.r')
 
+# read in estimated trip times, weighted by OD pair
+source('~/routing/anal/read-times.r')
 
 
-###############################################
-# read in the db-estimated departure times data
-###############################################
-t = read.csv( '~/routing/data/untracked/am-peak-times.csv', colClasses=c('hour'='factor') )
-t$pair = factor(paste0(t$o,'->',t$d))
-t$o = t$d = NULL
-# add weights by OD
-t = merge( x=t, y=ods[,c('pair','weight')], all.x=T, by='pair' )
-# add time deltas
-t$delta_hab = t$hab - t$any 
-t$delta_real = t$real - t$any
+
+
 # how often are the alternatives simply equivalent?
-sum((t$any==t$hab)*t$weight,na.rm=T)/sum(t$weight)
-sum((t$any==t$real)*t$weight,na.rm=T)/sum(t$weight)
-
-
-
-
+sum((times$any==times$hab)*times$weight,na.rm=T)/sum(times$weight)
+sum((times$any==times$real)*times$weight,na.rm=T)/sum(times$weight)
 
 ################################
 # analyze stats per OD

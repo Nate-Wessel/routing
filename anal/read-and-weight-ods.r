@@ -48,4 +48,4 @@ cairo_pdf('~/Dropbox/diss/routing/paper/figures/weights-adjustment.pdf',width=6,
 	}
 dev.off()
 remove(i,adj_factor,observed_density,sample_density,obs,fname,period)
-
+gc()
