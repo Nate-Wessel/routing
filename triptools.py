@@ -43,7 +43,6 @@ def clip_trips_to_window(trips):
 			to_remove.append(i)
 	for i in reversed(to_remove):
 		del trips[i]
-	#print('\t',len(to_remove),'trips removed from window')
 
 
 def remove_premature_departures(trips):
@@ -68,7 +67,6 @@ def remove_premature_departures(trips):
 		i+=1
 	# there should be no simultaneous departures
 	assert len(set([t.depart_ts for t in trips])) == len(trips)
-	#print(starting_length-len(trips),'suboptimal trips removed from',starting_length)
 
 
 def summarize_paths(trips):
