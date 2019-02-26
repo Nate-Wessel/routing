@@ -124,8 +124,9 @@ class Itinerary(Path):
 	def add_OTP_trip(self,trip_to_add):
 		"""Add a trip which uses this itinerary. Update to the most common path 
 		if necessary."""
-		# add the trip if valid
-		if trip_to_add.path != self or trip_to_add in self.OTP_trips: return 
+		# ensure the trip is valid
+		assert trip_to_add.path == self
+		assert trip_to_add not in self.OTP_trips
 		self.OTP_trips.append(trip_to_add)
 		# check that we still have the most common itinerary
 		if trip_to_add.path.otp_string != self.otp_string:
