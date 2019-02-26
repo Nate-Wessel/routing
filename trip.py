@@ -19,8 +19,8 @@ class Trip:
 		self.path = Path(path_string)
 		# trip_ids pulled from the database
 		self.trip_ids = trip_ids
-		# time from previous fastest trip
-		self.time_before = 0 
+		# time in seconds from previous trip
+		self.time_before = 1
 
 	def __repr__(self):
 		return '\tTrip=depart:{},arrive:{},via:{},trips:{}'.format(
