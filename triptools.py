@@ -93,7 +93,7 @@ def allocate_time(trips):
 	"""Allocate the time (in seconds) for which this trip is the next, 
 	clipping to the window used for removing trips."""
 	# sort the trips by departure
-	trips = sorted(trips, key=lambda k: k.depart) 
+	trips = sorted(trips, key=lambda t: t.depart_ts) 
 	dates_seen = set()
 	for i, trip in enumerate(trips):
 		if i == 0 or not trip.depart.date() in dates_seen:
@@ -107,5 +107,7 @@ def allocate_time(trips):
 		else:
 			# trip follows previous trip on this day 
 			from_prev = (trip.depart - trips[i-1].depart).total_seconds()
+		# add a tiny bit if necessary but don't assign zeroes
+		if from_prev == 0: from_prev += 1
 		trip.time_before = from_prev
 
