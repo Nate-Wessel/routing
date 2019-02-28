@@ -122,6 +122,8 @@ class OD:
 				habit_itin = itin
 		if habit_itin:
 			return habit_itin.departures
+		else:
+			return [ Departure(time) for time in triptools.sample_times() ]
 	
 	@property
 	def realtime_departures(self):
