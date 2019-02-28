@@ -29,7 +29,7 @@ ods$o = ods$d = ods$i = ods$arc = NULL
 ods$weight = (ods$o_area*ods$d_area) / sum(ods$o_area*ods$d_area)
 # and weights based on length distributions
 sample_density = density( ods$grid, weights=ods$weight, from=0, to=47, n=516, bw=1 )
-obs = read.csv('~/routing/data/TTS/observed_trip_lengths.csv')
+obs = read_csv('~/routing/data/TTS/observed_trip_lengths.csv')
 observed_density = density( obs$grid_dist, weights=obs$trips/sum(obs$trips), from=0, to=47, n=516, bw=1 )
 cairo_pdf('~/Dropbox/diss/routing/paper/figures/weights-adjustment.pdf',width=6,height=3)
 	par(mar=c(4,0,2,0),family='serif')
