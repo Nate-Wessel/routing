@@ -13,12 +13,12 @@ for( period in periods ){
 	if( file.exists(fname) ){
 		print(paste('reading',fname))
 		if( ! exists('times') ){
-			times = read.csv(fname)
+			times = read_csv(fname)
 			times$period = period
 		}else{
-			d = read.csv(fname)
+			d = read_csv(fname)
 			d$period = period
-			times = rbind(times,d)
+			times = bind_rows(times,d)
 			remove(d)
 		}
 	}
@@ -30,7 +30,8 @@ times$pair = factor(paste0(times$o,'->',times$d))
 times$o = times$d = NULL
 # add weights by OD
 print('merging times with ods')
-times = merge( x=times, y=ods[,c('pair','weight')], all.x=T, by='pair' )
+times = left_join( times, ods[,c('pair','weight')] )
 
+remove('fname')
 gc()
 
