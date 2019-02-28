@@ -1,6 +1,7 @@
 ##########################################################
 # read in OD level data and assign weights to observations
 ##########################################################
+library(tidyverse)
 if( exists('ods') ){ remove(ods) }
 # read in the OD pairs
 periods = c('am-peak','midday','pm-peak','evening')
@@ -10,24 +11,22 @@ for( period in periods ){
 	if( file.exists(fname) ){
 		print(paste('reading',fname))
 		if( ! exists('ods') ){
-			ods = read.csv(fname)
+			ods = read_csv(fname)
 			ods$period = period
 		}else{
-			d = read.csv(fname)
+			d = read_csv(fname)
 			d$period = period
-			ods = rbind(ods,d)
+			ods = bind_rows(ods,d)
 			remove(d)
 		}
 	}
 }
-# name the data, remove unecessary fluff
-#rownames(ods) = paste0(ods$o,'->',ods$d)
+# clean up the data and/or convert to factors
 ods$pair = factor(paste0(ods$o,'->',ods$d))
 ods$period = factor(ods$period)
 ods$o = ods$d = ods$i = ods$arc = NULL
 # assign weights based on areas
-ods$weight = ods$o_area * ods$d_area
-ods$weight = ods$weight / sum(ods$weight)
+ods$weight = (ods$o_area*ods$d_area) / sum(ods$o_area*ods$d_area)
 # and weights based on length distributions
 sample_density = density( ods$grid, weights=ods$weight, from=0, to=47, n=516, bw=1 )
 obs = read.csv('~/routing/data/TTS/observed_trip_lengths.csv')
