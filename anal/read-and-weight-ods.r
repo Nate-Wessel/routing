@@ -22,11 +22,17 @@ for( period in periods ){
 	}
 }
 # clean up the data and/or convert to factors
-ods$pair = factor(paste0(ods$o,'->',ods$d))
-ods$period = factor(ods$period)
-ods$o = ods$d = ods$i = ods$arc = NULL
+ods = ods %>% 
+	mutate(
+		pair = factor(paste0(o,'->',d)),
+		period = factor(period),
+		weight = (o_area*d_area) / sum(o_area*d_area),
+		from_grid = apply(cbind(-azimuth%%73,azimuth%%73),1,min)
+	) %>%
+	select(period,pair,everything(),-o,-d,-i,-arc,-o_area,-d_area)
+
 # assign weights based on areas
-ods$weight = (ods$o_area*ods$d_area) / sum(ods$o_area*ods$d_area)
+#ods$weight = (ods$o_area*ods$d_area) / sum(ods$o_area*ods$d_area)
 # and weights based on length distributions
 sample_density = density( ods$grid, weights=ods$weight, from=0, to=47, n=516, bw=1 )
 obs = read_csv('~/routing/data/TTS/observed_trip_lengths.csv')
