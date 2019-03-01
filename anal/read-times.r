@@ -23,15 +23,19 @@ for( period in periods ){
 		}
 	}
 }
-# rename, simplify, etc
-times$hour = factor(times$hour)
-times$period = factor(times$period)
-times$pair = factor(paste0(times$o,'->',times$d))
-times$o = times$d = NULL
-# add weights by OD
-print('merging times with ods')
-times = left_join( times, ods[,c('pair','weight')] )
-
 remove('fname')
+
+# rename, simplify, add fields from ods
+times = times %>% 
+	mutate(
+		hour = factor(hour),
+		period = factor(period),
+		pair = factor(paste0(o,'->',d)),
+		d_hab = hab - any,  # habit time delta 
+		d_real = real - any # realtime time delta
+	) %>%
+	select(pair,period,everything(),-o,-d) %>%
+	left_join( distinct(ods[,c('pair','weight')]) )
+
 gc()
 

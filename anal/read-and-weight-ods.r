@@ -29,7 +29,9 @@ ods = ods %>%
 		weight = (o_area*d_area) / sum(o_area*d_area),
 		from_grid = apply(cbind(-azimuth%%73,azimuth%%73),1,min)
 	) %>%
-	select(period,pair,everything(),-o,-d,-i,-arc,-o_area,-d_area)
+	select(period,pair,everything(),-o,-d,-i,-arc,-o_area,-d_area) %>%
+	arrange(pair,period)
+
 
 # assign weights based on areas
 #ods$weight = (ods$o_area*ods$d_area) / sum(ods$o_area*ods$d_area)
