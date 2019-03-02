@@ -23,7 +23,7 @@ for( period in periods ){
 		}
 	}
 }
-remove('fname')
+remove(fname,period)
 
 # rename, simplify, add fields from ods
 times = times %>% 

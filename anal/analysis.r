@@ -14,7 +14,7 @@ source('~/routing/anal/read-times.r')
 cairo_pdf('~/Dropbox/diss/routing/paper/figures/itinerary-count-hist.pdf',width=5,height=4)
 	ggplot(data=ods) +
 		geom_bar(
-			mapping=aes(x=retro_it_n,weight=weight,fill=factor(sched_it_n)),
+			mapping=aes(x=retro_it_n,weight=weight),
 			alpha=.50,
 			position='identity'
 		) +
@@ -29,15 +29,9 @@ times %>% summarise(
 )
 
 
-###################################################
-##### get aggregate stats from times back to ods ##
-###################################################
-## time deltas
-times %>% mutate(
-	d_hab = hab - any,
-	d_real = real - any
-)
-
+#########################################################
+##### get aggregate stats from times back to ods level ##
+#########################################################
 # find 90th percentile time delta per (od,period) for real and habit
 summary_table = times %>% group_by(pair,period) %>% 
 	summarise( 
@@ -47,16 +41,40 @@ summary_table = times %>% group_by(pair,period) %>%
 ods = inner_join(ods,summary_table)
 remove(summary_table)
 
-# first determine angle away from street grid
-ods$from_grid = apply(cbind(-ods$azimuth%%73,ods$azimuth%%73),1,min)
+# plot percentile travel time deltas
+d = times %>% 
+	filter(
+		period=='pm-peak',
+		pair %in% levels(pair)[sample(1:1000,200)],
+		d_hab >= 0
+	) %>% 
+	select(period,pair,d_hab,weight) %>%
+	group_by(pair) %>%
+	mutate( rank = row_number(d_hab) / max(row_number(d_hab)) ) %>%
+	arrange(pair,d_hab)
+ggplot(d) +
+	geom_vline(aes(xintercept=.9),color='red') + 
+	geom_step(
+		mapping=aes(x=rank,y=d_hab,group=pair),
+		alpha=d$weight/max(d$weight)
+	) +
+	geom_line(
+		mapping=aes(x=rank,y=d_hab),
+		color='blue'
+	) +
+	coord_cartesian(ylim=c(0,30))
+	
+
+
+
+
+
+
 
 #what predicts big time deltas?
-lmr = lm( d_hab90 ~ grid + from_grid + retro_ent, data=ods, weights=weight)
+lmr = lm( d_hab90 ~ grid + from_grid + retro_ent + period, data=ods, weights=weight)
 print(summary(lmr))
 # there is no relation with azimuth
-
-
-
 
 
 ###################################

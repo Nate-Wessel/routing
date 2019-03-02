@@ -27,7 +27,7 @@ ods = ods %>%
 		pair = factor(paste0(o,'->',d)),
 		period = factor(period),
 		weight = (o_area*d_area) / sum(o_area*d_area),
-		from_grid = apply(cbind(-azimuth%%73,azimuth%%73),1,min)
+		from_grid = apply(cbind(-(azimuth+17)%%90,(azimuth+17)%%90),1,min)
 	) %>%
 	select(period,pair,everything(),-o,-d,-i,-arc,-o_area,-d_area) %>%
 	arrange(pair,period)
