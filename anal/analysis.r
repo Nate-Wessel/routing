@@ -6,19 +6,37 @@ source('~/routing/anal/read-and-weight-ods.r')
 # read in estimated trip times, weighted by OD pair
 source('~/routing/anal/read-times.r')
 
+#####################################
+# analysis will proceed as the paper
+#####################################
 
-#####################################
-# very basic summary stats
-#####################################
 # itinerary frequency histogram
-cairo_pdf('~/Dropbox/diss/routing/paper/figures/itinerary-count-hist.pdf',width=5,height=4)
-	ggplot(data=ods) +
-		geom_bar(
-			mapping=aes(x=retro_it_n,weight=weight),
-			alpha=.50,
-			position='identity'
-		) +
+cairo_pdf('~/Dropbox/diss/routing/paper/figures/itinerary-count-hist.pdf',width=5,height=3)
+	ods %>% 
+	rename(retro=retro_it_n,sched=sched_it_n) %>% 
+	gather(retro,sched,key='dataset',value='n') %>% 
+	ggplot(data=.) +
+		geom_bar(mapping=aes(x=n,weight=weight,fill=dataset),alpha=.50,position='identity') +
 		facet_wrap(~period) + 
+		theme_light()
+dev.off()
+
+# what predicts entropy?
+entropy_lm = lm( sqrt(retro_ent) ~ grid + from_grid, data=ods, weights=weight)
+print(summary(entropy_lm))
+
+# Plot entropy ECDF
+cairo_pdf('~/Dropbox/diss/routing/paper/figures/entropy-ecdf.pdf',width=5,height=3)
+	ods %>%
+	arrange(retro_ent) %>%
+	mutate( retro_cum_w = cumsum(weight) / sum(weight) ) %>%
+	arrange(sched_ent) %>%
+	mutate( sched_cum_w = cumsum(weight) / sum(weight) ) %>%
+	ggplot(data=.) + 
+		geom_line( aes(x=retro_cum_w,y=retro_ent),color='red' ) + 
+		geom_line( aes(x=sched_cum_w,y=sched_ent),color='blue' ) + 
+		coord_trans(limy=c(0,4)) + 
+		labs(x='Cumulative Probability',y='Shannon Entropy (bits)') + 
 		theme_light()
 dev.off()
 
@@ -29,83 +47,40 @@ times %>% summarise(
 )
 
 
-#########################################################
-##### get aggregate stats from times back to ods level ##
-#########################################################
+# plot sampled ECDF travel time deltas
+sample_pairs = ods %>% select(pair,weight) %>% distinct() %>% sample_n(100,weight=weight) %>% select(pair)
+cairo_pdf('~/Dropbox/diss/routing/paper/figures/delta-ecdf.pdf',width=8,height=3)
+	times %>% 
+		inner_join(sample_pairs) %>% # this is a filter
+		gather(d_hab,d_real,key='Strategy',value='delta') %>% 
+		filter( delta >= 0 ) %>% 
+		group_by(pair,Strategy) %>%
+		mutate( rank = row_number(delta) / max(row_number(delta))) %>%
+		ggplot(data=.,aes(group=pair,alpha=weight)) +
+			geom_line( mapping=aes( rank, delta ), color='blue' ) +
+			scale_alpha(range=c(.05,.6)) +
+			geom_vline(aes(xintercept=.9),color='red') + 
+			coord_trans(limy=c(0,25)) + 
+			theme_minimal() +
+			facet_wrap(~Strategy) +
+			labs(x='Cumulative Probability',y='Habit Delta T (minutes)')
+dev.off()
+remove(sample_pairs)
+
 # find 90th percentile time delta per (od,period) for real and habit
-summary_table = times %>% group_by(pair,period) %>% 
+ods = times %>% 
+	group_by(pair,period) %>% 
 	summarise( 
-		d_hab90 =  quantile(x=d_hab, probs=.9,na.rm=T),
-		d_real90 = quantile(x=d_real,probs=.9,na.rm=T)
-	)
-ods = inner_join(ods,summary_table)
-remove(summary_table)
-
-# plot percentile travel time deltas
-d = times %>% 
-	filter(
-		period=='pm-peak',
-		pair %in% levels(pair)[sample(1:1000,200)],
-		d_hab >= 0
+		d_hab_90 = quantile(x=d_hab,probs=.9,na.rm=T),
+		d_real_90 = quantile(x=d_real,probs=.9,na.rm=T)
 	) %>% 
-	select(period,pair,d_hab,weight) %>%
-	group_by(pair) %>%
-	mutate( rank = row_number(d_hab) / max(row_number(d_hab)) ) %>%
-	arrange(pair,d_hab)
-ggplot(d) +
-	geom_vline(aes(xintercept=.9),color='red') + 
-	geom_step(
-		mapping=aes(x=rank,y=d_hab,group=pair),
-		alpha=d$weight/max(d$weight)
-	) +
-	geom_line(
-		mapping=aes(x=rank,y=d_hab),
-		color='blue'
-	) +
-	coord_cartesian(ylim=c(0,30))
-	
-
-
-
-
-
-
+	inner_join(ods)
+	 
 
 #what predicts big time deltas?
-lmr = lm( d_hab90 ~ grid + from_grid + retro_ent + period, data=ods, weights=weight)
-print(summary(lmr))
-# there is no relation with azimuth
+full_model = lm( d_hab90 ~ grid + retro_ent + retro_it_n + from_grid + period, data=ods, weights=weight)
+print(summary(full_model))
 
+terse_model = lm( d_real90 ~ retro_ent, data=ods, weights=weight)
+print(summary(terse_model))
 
-###################################
-# plot distributions of time deltas
-###################################
-pcts = seq(0,.99,by=.01)
-pct_vals = wtd.quantile(x=times$d_hab,q=pcts,na.rm=T,weight=times$weight)
-plot(x=pcts*100,y=pct_vals,type='l',col='red')
-grid()
-
-
-
-
-
-cairo_pdf('~/Dropbox/diss/routing/paper/figures/delta-t.pdf',width=6,height=4)
-	# calculate diff densities
-	i = !is.na(t$delta_hab) & t$delta_hab > 0
-	delta_hab = density( x=t[i,'delta_hab'], 
-		weights=t[i,'weight'] / sum(t[i,'weight']),
-		bw=.5, from=0, to=40, n=516
-	)
-	i = !is.na(t$delta_real) & t$delta_real > 0
-	delta_real = density( x=t[i,'delta_real'], 
-		weights=t[i,'weight'] / sum(t[i,'weight']),
-		bw=.5, from=0, to=40, n=516 
-	)
-	# plot
-	plot( 
-		delta_real, ylim=c(0,.12),
-		col='black', main='Travel time diffs', xlab='Minutes' )
-	lines( delta_hab, col='red' )
-dev.off()
-remove(i)
-gc()

@@ -35,7 +35,7 @@ times = times %>%
 		d_real = real - any # realtime time delta
 	) %>%
 	select(pair,period,everything(),-o,-d) %>%
-	left_join( distinct(ods[,c('pair','weight')]) )
+	left_join( distinct(ods[,c('pair','weight','grid')]) )
 
 gc()
 
