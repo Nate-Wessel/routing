@@ -3,9 +3,9 @@ from datetime import datetime, timedelta
 from random import shuffle
 
 # where are the things?
-output_dir	= '/home/nate/dissdata/routing/sched/'
+output_dir	= '/home/nate/dissdata/routing/17480/'
 OD_file		= 'data/ODs.csv'
-OTP_server	= 'http://166.48.61.19:8080/otp/routers/ttc-sched/plan'
+OTP_server	= 'http://166.48.61.19:8080/otp/routers/ttc-17480/plan'
 
 # define the start time
 start_time = datetime( year=2017, month=11, day=10 )

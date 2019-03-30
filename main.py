@@ -22,7 +22,7 @@ with open('data/untracked/od-stats.csv','w+') as f1, \
 
 	# read input from a file
 	line_num = 0
-	with open('data/sampled-ODs/1k.csv') as f3:
+	with open('data/sampled-ODs/10k.csv') as f3:
 		reader = csv.DictReader(f3)
 		for r in reader:
 			line_num += 1 
