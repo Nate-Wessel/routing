@@ -48,10 +48,10 @@ cairo_pdf('~/Dropbox/diss/routing/paper/figures/weights-adjustment.pdf',width=6,
 	# adjust weights iteratively to mimic desired distribution
 	for(i in 1:15){
 		adj_factor = observed_density$y / sample_density$y
-		ods$weight = ods$weight * approx(x=sample_density$x,y=adj_factor,xout=ods$grid)$y
+		ods$weight = ods$weight * approx(x=sample_density$x,y=adj_factor,xout=ods$grid,yright=0)$y
 		ods$weight = ods$weight / sum(ods$weight)
 		sample_density = density( ods$grid, weights=ods$weight, from=0, to=47, n=516, bw=1 )
-		lines(sample_density,col=rgb(0,0,1,alpha=0.1))
+		#lines(sample_density,col=rgb(0,0,1,alpha=0.1))
 	}
 dev.off()
 remove(i,adj_factor,observed_density,sample_density,obs,fname,period)
