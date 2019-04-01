@@ -19,6 +19,8 @@ class OD:
 		# summarize itinerary data
 		self.sched_itins = triptools.summarize_paths(self.sched_trips)
 		self.retro_itins = triptools.summarize_paths(self.retro_trips)
+		# store optimal departures once generated
+		self.optimal_departures_list = None
 
 	def __repr__(self):
 		name = str(self.orig)+' -> '+str(self.dest)
@@ -41,13 +43,6 @@ class OD:
 			return [ itin for itin in self.retro_itins if itin.prob >= 0.05 ]
 		elif kind in ['schedule','sched','s']:
 			return [ itin for itin in self.sched_itins if itin.prob >= 0.05 ]
-				
-	def entropy(self,itineraries):
-		"""shannon entropy of the itinerary probability distribution"""
-		entropy = 0
-		for itin in itineraries:
-			entropy += itin.prob * log(itin.prob,2)
-		return - entropy
 
 	def get_trips_from_file(self,dataset):
 		"""Check files for trips data and read it into a list. Remove any trips
@@ -71,10 +66,12 @@ class OD:
 		triptools.remove_premature_departures(trips)
 		return trips
 
-	@property
 	def optimal_departures(self):
 		"""Return a set of sampled travel times which are as fast as possible, and 
 		indifferent to route choice. This is the status quo."""
+		# if we already have it, no need to calculate
+		if self.optimal_departures_list:
+			return self.optimal_departures_list
 		# get all possible trips and any walking alternatives
 		departures, all_trips, walk_time = [], [], None
 		for itin in self.alter_itins():
@@ -105,6 +102,7 @@ class OD:
 			# no trip or attractive walking option
 			else:
 				departures.append( Departure( time ) )
+		self.optimal_departures_list = departures
 		return departures
 
 
@@ -168,9 +166,22 @@ class OD:
 	@property
 	def sched_entropy(self):
 		"""schedule-based entropy"""
-		return self.entropy(self.sched_itins)
+		# ensure probabilities sum to 1
+		P = [ itin.prob for itin in self.entropy(self.alter_itins('sched')) ]
+		P = [ P_i/sum(P) for P_i in P ]
+		return - sum( [ P_i * log(P_i,2) for P_i in P ] )
+
 	@property
 	def retro_entropy(self):
 		"""retro-spective entropy"""
-		return self.entropy(self.retro_itins)
+		optimal_paths = [ dep.trip.path for dep in self.optimal_departures() ]
+		#get frequency counts
+		c = {}
+		for path in optimal_paths:
+			if path in c:
+				c[path] += 1
+			else:
+				c[path] = 1
+		P = [ c[key]/len(optimal_paths) for key in c ]
+		return - sum( [ P_i * log(P_i,2) for P_i in P ] )
 

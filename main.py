@@ -42,7 +42,7 @@ with open('data/untracked/od-stats.csv','w+') as f1, \
 			# calculate travel times for the OD
 			habit_times = od.habit_departures
 			real_times = od.realtime_departures
-			any_times = od.optimal_departures
+			any_times = od.optimal_departures()
 			assert len(habit_times) == len(real_times) == len(any_times)
 			i = 0
 			while i < len(habit_times):
