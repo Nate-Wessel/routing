@@ -57,6 +57,7 @@ class Departure:
 	def minutes_before_boarding(self):
 		"""Minutes spent waiting or walking before boarding the first vehicle. If 
 		this is a walking only trip then this is equal to the walk time."""
+		assert self.trip or self.walk_time
 		if self.trip:
 			td = self.trip.first_boarding_time - self.departure_time
 			return round(td.total_seconds()/60.,3)
