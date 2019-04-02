@@ -69,7 +69,7 @@ def all_itinerary_trips(itin):
 					dest.stop_uid = (%(d_stops)s)[1] AND
 					orig.stop_sequence < dest.stop_sequence AND
 					-- departure is within time window
-					orig.local_time - (interval '1 second' * (%(walk_times)s)[1] ) BETWEEN 
+					orig.local_time - '10 minutes'::interval BETWEEN 
 						%(window_start)s::time AND 
 						%(window_end)s::time + '30 minutes'::interval
 						
