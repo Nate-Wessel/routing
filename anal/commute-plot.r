@@ -2,7 +2,7 @@
 
 # read in the travel times table - all five days
 # covers minutes between 6-22 for five days
-od = read_csv('~/routing/data/output/12->316-trips.csv',skip=4)
+od = read_csv('~/routing/data/output/12->316-trips.csv',skip=6)
 # add factor for days
 od$day = ordered(
 	rep(c('Monday','Tuesday','Wednesday','Thursday','Friday'),rep(180,5)),
@@ -15,19 +15,20 @@ od = od %>%
 	select(-depart)
 	
 tt = od %>% 
-	gather( a,b,c,key='itinerary',value='travel_time' ) %>%
-	select(-a_pre_board,-b_pre_board,-c_pre_board)
+	gather( a,b,c,d,e,key='itinerary',value='travel_time' ) %>%
+	select(-ends_with('pre_board'))
 
 d = od %>%
-	select(-a,-b,-c) %>%
-	rename(a=a_pre_board,b=b_pre_board,c=c_pre_board) %>%
-	gather(a,b,c,key='itinerary',value='pre_board') %>%
+	select(-c(a,b,c,d,e)) %>%
+	rename(
+		a=a_pre_board,
+		b=b_pre_board,
+		c=c_pre_board,
+		d=d_pre_board,
+		e=e_pre_board
+	) %>%
+	gather(a,b,c,d,e,key='itinerary',value='pre_board') %>%
 	inner_join(tt)
-
-# print mean travel times per itinerary
-d %>% 
-	group_by(itinerary) %>%
-	summarize( mtt = mean(travel_time) )
 
 optimal_choice = 	d %>%
 	# add a field for mean travel_time per itinerary
@@ -37,6 +38,7 @@ optimal_choice = 	d %>%
 	# sort by travel time and then mean travel time, asc
 	arrange(travel_time,mtt) %>% 
 	group_by(day,hour) %>%
+	# select the first per departure and day
 	slice(1) %>%
 	select(itinerary,day,hour)
 
@@ -73,8 +75,9 @@ cairo_pdf('~/Dropbox/diss/routing/paper/figures/12-316.pdf',width=7,height=5)
 			data=realtime_choice,
 			aes(x=hour,y=0,xend=hour,yend=5,color=itinerary),size=1.1
 		) +
-		scale_color_manual(values=c('navyblue','salmon','aquamarine3','deeppink2','goldenrod')) + 
+		scale_color_manual(values=c('salmon','navyblue','aquamarine3','deeppink2','goldenrod')) + 
 		facet_grid(day~.) + 
 		theme_minimal() + 
+		coord_trans(limx=c(6,9)) + 
 		labs(y='Travel Time (Minutes)',x='Time (AM)')
 dev.off()
