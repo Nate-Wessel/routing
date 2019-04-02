@@ -11,8 +11,7 @@ with open('data/untracked/od-stats.csv','w+') as f1, \
 	open('data/untracked/times.csv','w+') as f2:
 	# OD level outputs
 	fieldnames = [ 'i','o','d','azimuth','arc','grid','o_area','d_area',
-		'sched_ent','retro_ent',
-		'sched_it_n','retro_it_n' ]
+		'retro_ent','sched_it_n','retro_it_n' ]
 	od_writer = csv.DictWriter(f1,fieldnames=fieldnames)
 	od_writer.writeheader()
 	# OD - time level outputs
@@ -22,7 +21,7 @@ with open('data/untracked/od-stats.csv','w+') as f1, \
 
 	# read input from a file
 	line_num = 0
-	with open('data/sampled-ODs/10k.csv') as f3:
+	with open('data/sampled-ODs/1k.csv') as f3:
 		reader = csv.DictReader(f3)
 		for r in reader:
 			line_num += 1 
@@ -33,7 +32,6 @@ with open('data/untracked/od-stats.csv','w+') as f1, \
 				'i':r['i'], 'o':r['o'], 'd':r['d'],
 				'azimuth':r['azimuth'], 'arc':r['arc'], 'grid':r['grid_dist'],
 				'o_area':r['o_area'],'d_area':r['d_area'],
-				'sched_ent':od.sched_entropy,
 				'retro_ent':od.retro_entropy,
 				'sched_it_n':len(od.alter_itins('sched')),
 				'retro_it_n':len(od.alter_itins('retro'))
