@@ -37,12 +37,12 @@ class OD:
 		return( name + sched + retro )
 
 	def alter_itins(self,kind='retro'):
-		"""Return a list of itineraries where each is optimal at least 5% of the 
+		"""Return a list of itineraries where each is optimal at least x% of the 
 		time."""
 		if kind == 'retro':
-			return [ itin for itin in self.retro_itins if itin.prob >= 0.05 ]
+			return [ itin for itin in self.retro_itins if itin.prob >= 0.0 ]
 		elif kind in ['schedule','sched','s']:
-			return [ itin for itin in self.sched_itins if itin.prob >= 0.05 ]
+			return [ itin for itin in self.sched_itins if itin.prob >= 0.0 ]
 
 	def get_trips_from_file(self,dataset):
 		"""Check files for trips data and read it into a list. Remove any trips
@@ -167,14 +167,15 @@ class OD:
 	def sched_entropy(self):
 		"""schedule-based entropy"""
 		# ensure probabilities sum to 1
-		P = [ itin.prob for itin in self.entropy(self.alter_itins('sched')) ]
+		P = [ itin.prob for itin in self.alter_itins('sched') ]
 		P = [ P_i/sum(P) for P_i in P ]
 		return - sum( [ P_i * log(P_i,2) for P_i in P ] )
 
 	@property
 	def retro_entropy(self):
 		"""retro-spective entropy"""
-		optimal_paths = [ dep.trip.path for dep in self.optimal_departures() ]
+		departures = self.optimal_departures()
+		optimal_paths = [ dep.trip.path if dep.trip else 'walk' for dep in departures ]
 		#get frequency counts
 		c = {}
 		for path in optimal_paths:
