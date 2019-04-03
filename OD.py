@@ -12,46 +12,53 @@ class OD:
 		self.orig = origin
 		self.dest = dest
 		# read in the trip itineraries
-		self.retro_trips = self.get_trips_from_file('retro')
-		self.sched_trips = self.get_trips_from_file('sched')
-		triptools.allocate_time(self.sched_trips)
-		triptools.allocate_time(self.retro_trips)
+		self.trips = self.get_trips_from_file()
+		#triptools.allocate_time(self.trips)
 		# summarize itinerary data
-		self.sched_itins = triptools.summarize_paths(self.sched_trips)
-		self.retro_itins = triptools.summarize_paths(self.retro_trips)
-		# store optimal departures once generated
-		self.optimal_departures_list = None
+		self.itins = triptools.summarize_paths(self.trips)
+		# get list of optimal departures
+		self.optimal_departures = self.get_optimal_departures()
+		# assign probabilities to departures
+		self.assign_probs()
 
 	def __repr__(self):
 		name = str(self.orig)+' -> '+str(self.dest)
-		sched = '\n\tsched | entropy:{} | trips:{}'.format( 
-			round(self.sched_entropy,2), len(self.sched_trips) )
-		retro = '\n\tretro | entropy:{} | trips:{}'.format( 
-			round(self.retro_entropy,2), len(self.retro_trips) )
+		stats = '\n\tentropy:{} | trips:{}'.format( 
+			round(self.entropy,4), len(self.trips) )
 		for itin in self.alter_itins():
-			retro += '\n\t\tPr:{}, '.format( round(itin.prob,2) )
-			retro += 'It:{}'.format( itin ) 
-		for itin in self.alter_itins('sched'):
-			sched += '\n\t\tPr:{}, '.format( round(itin.prob,2) )
-			sched += 'It:{}'.format( itin )
-		return( name + sched + retro )
+			stats += '\n\t\tPr:{}, '.format( round(itin.prob,2) )
+			stats += 'It:{}'.format( itin ) 
+		return( name + stats )
 
-	def alter_itins(self,kind='retro'):
-		"""Return a list of itineraries where each is optimal at least x% of the 
-		time."""
-		if kind == 'retro':
-			return [ itin for itin in self.retro_itins if itin.prob >= 0.0 ]
-		elif kind in ['schedule','sched','s']:
-			return [ itin for itin in self.sched_itins if itin.prob >= 0.0 ]
+	def assign_probs(self):
+		"""Assign P_i values based on participation in optimal departures.
+		Drop any itineraries with no optimal departures."""
+		deps = self.optimal_departures
+		optimal_paths = [ dep.trip.path if dep.trip else 'w' for dep in deps ]
+		#get frequency counts
+		count = {}
+		for path in optimal_paths:
+			if path in count: count[path] += 1
+			else:             count[path] =  1
+		for path in optimal_paths:
+			for i, itin in enumerate(self.itins):
+				if path == itin: 
+					itin.prob = count[path] / len(optimal_paths)
+					break
+		# drop any p==0 itins
+		self.itins = [ it for it in self.itins if it.prob > 0 ]
+		# sort by prob
+		self.itins.sort(key=lambda i: i.prob, reverse=True)
 
-	def get_trips_from_file(self,dataset):
+	def alter_itins(self):
+		"""Return a list of itineraries"""
+		return self.itins
+
+	def get_trips_from_file(self):
 		"""Check files for trips data and read it into a list. Remove any trips
 		outside the time window as well as any suboptimal trips."""
-		# directories to check
-		if dataset == 'sched': 
-			directories = ['sched'] 
-		elif dataset == 'retro': 
-			directories = ['17476','17477','17478','17479','17480']
+		# directories to check 
+		directories = ['17476','17477','17478','17479','17480']
 		trips = []
 		for d in directories:
 			csvpath = config.input_dir+d+'/'+str(self.orig)+'/'+str(self.dest)+'.csv'
@@ -66,12 +73,9 @@ class OD:
 		triptools.remove_premature_departures(trips)
 		return trips
 
-	def optimal_departures(self):
+	def get_optimal_departures(self):
 		"""Return a set of sampled travel times which are as fast as possible, and 
 		indifferent to route choice. This is the status quo."""
-		# if we already have it, no need to calculate
-		if self.optimal_departures_list:
-			return self.optimal_departures_list
 		# get all possible trips and any walking alternatives
 		departures, all_trips, walk_time = [], [], None
 		for itin in self.alter_itins():
@@ -102,7 +106,6 @@ class OD:
 			# no trip or attractive walking option
 			else:
 				departures.append( Departure( time ) )
-		self.optimal_departures_list = departures
 		return departures
 
 
@@ -162,19 +165,10 @@ class OD:
 				departures.append( Departure( time, None, walk_time ) )
 		return departures
 
-	
 	@property
-	def sched_entropy(self):
-		"""schedule-based entropy"""
-		# ensure probabilities sum to 1
-		P = [ itin.prob for itin in self.alter_itins('sched') ]
-		P = [ P_i/sum(P) for P_i in P ]
-		return - sum( [ P_i * log(P_i,2) for P_i in P ] )
-
-	@property
-	def retro_entropy(self):
-		"""retro-spective entropy"""
-		departures = self.optimal_departures()
+	def entropy(self):
+		"""Base-2 Shannon Entropy of optimal departures"""
+		departures = self.optimal_departures
 		optimal_paths = [ dep.trip.path if dep.trip else 'walk' for dep in departures ]
 		#get frequency counts
 		c = {}
@@ -183,6 +177,7 @@ class OD:
 				c[path] += 1
 			else:
 				c[path] = 1
+		# frequency to P values and calculate entropy
 		P = [ c[key]/len(optimal_paths) for key in c ]
 		return - sum( [ P_i * log(P_i,2) for P_i in P ] )
 

@@ -11,7 +11,7 @@ with open('data/untracked/od-stats.csv','w+') as f1, \
 	open('data/untracked/times.csv','w+') as f2:
 	# OD level outputs
 	fieldnames = [ 'i','o','d','azimuth','arc','grid','o_area','d_area',
-		'retro_ent','sched_it_n','retro_it_n' ]
+		'entropy','it_n' ]
 	od_writer = csv.DictWriter(f1,fieldnames=fieldnames)
 	od_writer.writeheader()
 	# OD - time level outputs
@@ -25,6 +25,7 @@ with open('data/untracked/od-stats.csv','w+') as f1, \
 		reader = csv.DictReader(f3)
 		for r in reader:
 			line_num += 1 
+#			if line_num <= 33: continue
 			# construct the OD
 			od = OD( r['o'], r['d'] )
 			# add attributes to output file
@@ -32,15 +33,14 @@ with open('data/untracked/od-stats.csv','w+') as f1, \
 				'i':r['i'], 'o':r['o'], 'd':r['d'],
 				'azimuth':r['azimuth'], 'arc':r['arc'], 'grid':r['grid_dist'],
 				'o_area':r['o_area'],'d_area':r['d_area'],
-				'retro_ent':od.retro_entropy,
-				'sched_it_n':len(od.alter_itins('sched')),
-				'retro_it_n':len(od.alter_itins('retro'))
+				'entropy':od.entropy,
+				'it_n':len(od.alter_itins()),
 			})
 			f1.flush()
 			# calculate travel times for the OD
 			habit_times = od.habit_departures
 			real_times = od.realtime_departures
-			any_times = od.optimal_departures()
+			any_times = od.optimal_departures
 			assert len(habit_times) == len(real_times) == len(any_times)
 			i = 0
 			while i < len(habit_times):

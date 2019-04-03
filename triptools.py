@@ -70,44 +70,46 @@ def remove_premature_departures(trips):
 
 
 def summarize_paths(trips):
-	"""Returns a list of itineraries sorted by preeminence."""
+	"""Returns a list of distrinct itineraries."""
 	# get a set of distinct Path objects. We have to use equality rather than 
 	# hashing here. 
 	itins = []
-	# add all trips to the Itinerary each belongs to 
+	# add all OTP paths to the Itinerary each belongs to, creating new ones
+	# along the way 
 	for trip in trips:
 		if trip.path not in itins:
 			itins.append( Itinerary(trip.path) )
 		i = itins.index(trip.path)
 		itins[i].add_OTP_trip( trip )
-	# get total time in trips
-	total_time = sum( [ itin.total_time for itin in itins ] )
-	# assign probabilities based on share of total time
-	for itin in itins:
-		itin.prob = itin.total_time / total_time
-	# and sort by prob, highest first
-	return sorted( itins, key=lambda k: k.prob, reverse=True )
+	# remove any itineraries which have no travel times in the DB at all 
+	bad_itins = []
+	for i, itin in enumerate(itins):
+		tts = [ d for d in itin.departures if d.travel_time ]
+		if len(tts) == 0: bad_itins.append(i)
+	for i in reversed(bad_itins):
+		itins.pop(i)
+	return itins
 
 
-def allocate_time(trips):
-	"""Allocate the time (in seconds) for which this trip is the next, 
-	clipping to the window used for removing trips."""
-	# sort the trips by departure
-	trips = sorted(trips, key=lambda t: t.depart_ts) 
-	dates_seen = set()
-	for i, trip in enumerate(trips):
-		if i == 0 or not trip.depart.date() in dates_seen:
-			# trip is first of the day
-			dates_seen |= {trip.depart.date()}
-			# create a localized datetime 
-			start_dt = config.tz.localize( datetime.combine(
-				trip.depart.date(), config.window_start_time
-			) )
-			from_prev = (trip.depart - start_dt).total_seconds()
-		else:
-			# trip follows previous trip on this day 
-			from_prev = (trip.depart - trips[i-1].depart).total_seconds()
-		# add a tiny bit if necessary but don't assign zeroes
-		if from_prev == 0: from_prev += 1
-		trip.time_before = from_prev
+#def allocate_time(trips):
+#	"""Allocate the time (in seconds) for which this trip is the next, 
+#	clipping to the window used for removing trips."""
+#	# sort the trips by departure
+#	trips = sorted(trips, key=lambda t: t.depart_ts) 
+#	dates_seen = set()
+#	for i, trip in enumerate(trips):
+#		if i == 0 or not trip.depart.date() in dates_seen:
+#			# trip is first of the day
+#			dates_seen |= {trip.depart.date()}
+#			# create a localized datetime 
+#			start_dt = config.tz.localize( datetime.combine(
+#				trip.depart.date(), config.window_start_time
+#			) )
+#			from_prev = (trip.depart - start_dt).total_seconds()
+#		else:
+#			# trip follows previous trip on this day 
+#			from_prev = (trip.depart - trips[i-1].depart).total_seconds()
+#		# add a tiny bit if necessary but don't assign zeroes
+#		if from_prev == 0: from_prev += 1
+#		trip.time_before = from_prev
 
