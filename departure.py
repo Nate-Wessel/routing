@@ -12,15 +12,13 @@ class Departure:
 		self.departure_time = from_time
 		self.trip = trip
 		self.walk_time = None
-		if trip:
+		self.path = None
+		if trip: 
 			self.path = trip.path
-		elif walk_itin:
+		elif walk_itin: 
 			self.walk_time = walk_itin.walk_time
 			self.path = walk_itin
-		else:
-			# no way of getting to the destination
-			pass
-
+		else: pass 	# no way of getting to the destination
 
 	def __repr__(self):
 		rep = 'Departure from:{}'.format(self.departure_time.time())
