@@ -33,8 +33,7 @@ class OD:
 	def assign_probs(self):
 		"""Assign P_i values based on participation in optimal departures.
 		Drop any itineraries with no optimal departures."""
-		deps = self.optimal_departures
-		optimal_paths = [ dep.trip.path if dep.trip else 'w' for dep in deps ]
+		optimal_paths = [ dep.path for dep in self.optimal_departures ]
 		#get frequency counts
 		count = {}
 		for path in optimal_paths:
@@ -77,15 +76,15 @@ class OD:
 		"""Return a set of sampled travel times which are as fast as possible, and 
 		indifferent to route choice. This is the status quo."""
 		# get all possible trips and any walking alternatives
-		departures, all_trips, walk_time = [], [], None
+		departures, all_trips, walk = [], [], None
 		for itin in self.alter_itins():
-			if not walk_time and itin.is_walking: 
-				walk_time = itin.walk_time
+			if not walk and itin.is_walking: 
+				walk = itin
 			else: # itin has transit
 				all_trips.extend( itin.get_trips() )
 		# if we have only walking, then all trips will be walking
-		if walk_time and len(self.alter_itins()) == 1:
-			return [ Departure(t,None,walk_time) for t in triptools.sample_times() ]
+		if walk and len(self.alter_itins()) == 1:
+			return [ Departure(t,None,walk) for t in triptools.sample_times() ]
 		# we now have only trips or trips and a walking option
 		triptools.remove_premature_departures(all_trips)
 		# ensure trips are sorted by departure, ASC
@@ -97,9 +96,9 @@ class OD:
 			while i < len(optimal_trips) and optimal_trips[i].depart <= time: i += 1
 			# no trips left or walking better option
 			if ( i >= len(optimal_trips) or (
-				walk_time and (optimal_trips[i].arrive-time) > walk_time
+				walk and (optimal_trips[i].arrive-time) > walk.walk_time
 			) ):
-				departures.append( Departure( time, None, walk_time ) )
+				departures.append( Departure( time, None, walk ) )
 			# have trip better than walking if that was available
 			elif i < len(optimal_trips):
 				departures.append( Departure( time, optimal_trips[i] ) )
@@ -133,15 +132,15 @@ class OD:
 		From itineraries with identical departure times (due to shared first leg), 
 		the one with the better mean travel time is chosen."""
 		# get a big list of all possible trips, noting any end to end walking options	
-		departures, all_trips, walk_time = [], [], None
+		departures, all_trips, walk = [], [], None
 		# for itineraries sorted in order of mean travel time:
 		for itin in sorted(self.alter_itins(),key=lambda i: i.mean_travel_time):
-			if not walk_time and itin.is_walking: walk_time = itin.walk_time
+			if not walk and itin.is_walking: walk = itin
 			# extend right
 			else: all_trips.extend( itin.get_trips() )
 		# if we have only walking, then all trips will be walking
-		if walk_time and len(self.alter_itins()) == 1:
-			return [ Departure(t,None,walk_time) for t in triptools.sample_times() ]
+		if walk and len(self.alter_itins()) == 1:
+			return [ Departure(t,None,walk) for t in triptools.sample_times() ]
 		# we now have only trips or trips and a walking option
 		# this is already sorted by mean itinerary travel time
 		# now also (stably) sort by departure minus initial walk
@@ -156,20 +155,20 @@ class OD:
 			# we still have trips
 			if i < len(trips):
 				# if no walking or trip is better
-				if (not walk_time) or trips[i].first_boarding_time < time + walk_time:
+				if (not walk) or trips[i].first_boarding_time < time + walk.walk_time:
 					departures.append( Departure( time, trips[i] ) )
 				else: # walking is the better option
-					departures.append( Departure( time, None, walk_time ) )
+					departures.append( Departure( time, None, walk ) )
 			# no trips left
 			else: 
-				departures.append( Departure( time, None, walk_time ) )
+				departures.append( Departure( time, None, walk ) )
 		return departures
 
 	@property
 	def entropy(self):
 		"""Base-2 Shannon Entropy of optimal departures"""
 		departures = self.optimal_departures
-		optimal_paths = [ dep.trip.path if dep.trip else 'walk' for dep in departures ]
+		optimal_paths = [ dep.path for dep in departures if dep.path ]
 		#get frequency counts
 		c = {}
 		for path in optimal_paths:

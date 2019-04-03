@@ -3,12 +3,24 @@ import datetime as dt
 
 class Departure:
 	"""Departure, at a particular time, using a particular method."""
-	def __init__(self,departure_time,trip=None,walk_time=None):
-		self.departure_time = departure_time
-		# reference to the trip object used
+	def __init__(self,from_time,trip=None,walk_itin=None):
+		"""
+		from_time: when the departure is starting from, if not departing
+		trip: trip object assigned to this departure
+		walk_itin: an alternative walking itinerary
+		"""
+		self.departure_time = from_time
 		self.trip = trip
-		# timedelta (or None) giving a walking time
-		self.walk_time = walk_time
+		self.walk_time = None
+		if trip:
+			self.path = trip.path
+		elif walk_itin:
+			self.walk_time = walk_itin.walk_time
+			self.path = walk_itin
+		else:
+			# no way of getting to the destination
+			pass
+
 
 	def __repr__(self):
 		rep = 'Departure from:{}'.format(self.departure_time.time())
@@ -47,11 +59,11 @@ class Departure:
 		elif self.walk_time:
 			return self.walk_time
 
-	@property
-	def wait_duration(self):
-		"""time spent waiting to depart, not including walking"""
-		if self.trip:
-			return self.trip.depart - self.departure_time
+#	@property
+#	def wait_duration(self):
+#		"""time spent waiting to depart, not including walking"""
+#		if self.trip:
+#			return self.trip.depart - self.departure_time
 		
 	@property
 	def minutes_before_boarding(self):
@@ -61,7 +73,7 @@ class Departure:
 		if self.trip:
 			td = self.trip.first_boarding_time - self.departure_time
 			return round(td.total_seconds()/60.,3)
-		elif self.walk_time:
+		elif self.walk_itin:
 			return round(self.walk_time.total_seconds()/60.,3)
 
 

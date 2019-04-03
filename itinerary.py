@@ -56,10 +56,10 @@ class Itinerary(Path):
 		self.DB_mean_travel_time = None
 		self.prob = 0
 
-	def __hash__(self):
-		"""This is to override the Path method only. this function is not to be 
-		used."""
-		assert False # we should not be here. 
+#	def __hash__(self):
+#		"""This is to override the Path method only. this function is not to be 
+#		used."""
+#		assert False # we should not be here. 
 
 	@property
 	def mean_travel_time(self):
@@ -85,7 +85,7 @@ class Itinerary(Path):
 			##############
 			if self.is_walking: # all departures are the same
 				self.DB_departures = [ 
-					Departure(time,None,self.walk_time) for time in sample_times() 
+					Departure(time,None,self) for time in sample_times() 
 				]
 			else: # trip based departures
 				# get trips sorted (first to last) by departure
