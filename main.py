@@ -10,8 +10,7 @@ from OD import OD
 with open('data/untracked/od-stats.csv','w+') as f1, \
 	open('data/untracked/times.csv','w+') as f2:
 	# OD level outputs
-	fieldnames = [ 'i','o','d','azimuth','arc','grid','o_area','d_area',
-		'entropy','it_n' ]
+	fieldnames = [ 'i','o','d','entropy','it_n' ]
 	od_writer = csv.DictWriter(f1,fieldnames=fieldnames)
 	od_writer.writeheader()
 	# OD - time level outputs
@@ -25,14 +24,12 @@ with open('data/untracked/od-stats.csv','w+') as f1, \
 		reader = csv.DictReader(f3)
 		for r in reader:
 			line_num += 1 
-#			if line_num <= 33: continue
+			#if line_num <= 248: continue
 			# construct the OD
 			od = OD( r['o'], r['d'] )
 			# add attributes to output file
 			od_writer.writerow({
 				'i':r['i'], 'o':r['o'], 'd':r['d'],
-				'azimuth':r['azimuth'], 'arc':r['arc'], 'grid':r['grid_dist'],
-				'o_area':r['o_area'],'d_area':r['d_area'],
 				'entropy':od.entropy,
 				'it_n':len(od.alter_itins()),
 			})
