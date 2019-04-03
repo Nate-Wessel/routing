@@ -33,7 +33,7 @@ class OD:
 	def assign_probs(self):
 		"""Assign P_i values based on participation in optimal departures.
 		Drop any itineraries with no optimal departures."""
-		optimal_paths = [ dep.path for dep in self.optimal_departures ]
+		optimal_paths = [ dep.path for dep in self.optimal_departures if dep.path ]
 		#get frequency counts
 		count = {}
 		for path in optimal_paths:
