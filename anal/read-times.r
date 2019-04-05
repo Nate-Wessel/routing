@@ -29,13 +29,13 @@ remove(fname,period)
 times = times %>% 
 	mutate(
 		hour = factor(hour),
-		period = factor(period),
+		period = ordered(period,levels=c('am-peak','midday','pm-peak','evening')),
 		pair = factor(paste0(o,'->',d)),
 		d_hab = hab - any,  # habit time delta 
 		d_real = real - any # realtime time delta
 	) %>%
 	select(pair,period,everything(),-o,-d) %>%
-	left_join( distinct(ods[,c('pair','weight','grid')]) )
+	left_join( distinct(ods[,c('pair','weight','grid_dist')]) )
 
 gc()
 

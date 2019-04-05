@@ -21,6 +21,8 @@ for( period in periods ){
 		}
 	}
 }
+# order periods factor by time
+
 
 # add extra variables to OD pairs
 meta = read_csv('~/routing/data/sampled-ODs/all.csv')
@@ -29,7 +31,7 @@ ods = ods %>%
 	left_join( meta ) %>% 
 	mutate(
 		pair = factor(paste0(o,'->',d)),
-		period = factor(period),
+		period = ordered(period,levels=c('am-peak','midday','pm-peak','evening')),
 		weight = (o_area*d_area) / sum(o_area*d_area),
 		from_grid = apply(cbind(-(azimuth+17)%%90,(azimuth+17)%%90),1,min)
 	) %>%

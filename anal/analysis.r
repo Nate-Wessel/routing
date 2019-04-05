@@ -12,31 +12,32 @@ source('~/routing/anal/read-times.r')
 
 # itinerary frequency histogram
 cairo_pdf('~/Dropbox/diss/routing/paper/figures/itinerary-count-hist.pdf',width=5,height=3)
-	ods %>% 
-	rename(retro=retro_it_n,sched=sched_it_n) %>% 
-	gather(retro,sched,key='dataset',value='n') %>% 
-	ggplot(data=.) +
-		geom_bar(mapping=aes(x=n,weight=weight,fill=dataset),alpha=.50,position='identity') +
+	ggplot(ods) +
+		geom_bar(mapping=aes(x=it_n,weight=weight)) +
 		facet_wrap(~period) + 
-		theme_light()
+		theme_light() +
+		coord_trans(limx=c(0,25)) +
+		labs(x='Itineraries',y='Frequency')
 dev.off()
 
 # what predicts entropy?
-entropy_lm = lm( sqrt(retro_ent) ~ grid + from_grid, data=ods, weights=weight)
+entropy_lm = lm( 
+	entropy ~ grid_dist + from_grid + crosses_sub + real_flow + o_km_from_sub * d_km_from_sub, 
+	data=ods, 
+	weights=weight
+)
 summary(entropy_lm)
 
 # Plot entropy ECDF
 cairo_pdf('~/Dropbox/diss/routing/paper/figures/entropy-ecdf.pdf',width=5,height=3)
 	ods %>%
-	arrange(retro_ent) %>%
-	mutate( retro_cum_w = cumsum(weight) / sum(weight) ) %>%
-	arrange(sched_ent) %>%
-	mutate( sched_cum_w = cumsum(weight) / sum(weight) ) %>%
+	arrange(entropy) %>% 
+	group_by(period) %>% 
+	mutate( cum_w = cumsum(weight) / sum(weight) ) %>%
 	ggplot(data=.) + 
-		geom_line( aes(x=retro_cum_w,y=retro_ent),color='red' ) + 
-		geom_line( aes(x=sched_cum_w,y=sched_ent),color='blue' ) + 
+		geom_line( aes(x=cum_w,y=entropy,color=period) ) + 
 		coord_trans(limy=c(0,4)) + 
-		labs(x='Cumulative Probability',y='Shannon Entropy (bits)') + 
+		labs(x='Cumulative Probability',y='Entropy (bits)') + 
 		theme_light()
 dev.off()
 
@@ -46,24 +47,36 @@ times %>% summarise(
 	real_percent_optimal = sum((any==real)*weight,na.rm=T)/sum(weight)
 )
 
+times %>% 
+	group_by(pair) %>% 
+	summarize( 
+		optimal_pct = sum(any==real,na.rm=T)/sum(!is.na(real)),
+		weight = mean(weight)
+	) %>%
+	arrange(-optimal_pct) %>% 
+	mutate( cump = cumsum(weight) / sum(weight) ) %>% 
+	ggplot(data=.) + 
+		geom_line(aes(cump,optimal_pct))
+
 # plot sampled ECDF travel time deltas
 # can't use stat_ecdf because it doesn't take weights
-sample_pairs = ods %>% select(pair,weight) %>% distinct() %>% sample_n(size=25,weight=weight) %>% select(pair)
-cairo_pdf('~/Dropbox/diss/routing/paper/figures/delta-ecdf.pdf',width=8,height=3)
+sample_pairs = ods %>% sample_n(size=100,weight=weight) %>% select(pair)
+cairo_pdf('~/Dropbox/diss/routing/paper/figures/delta-ecdf.pdf',width=8,height=4)
 	times %>% 
 		inner_join(sample_pairs) %>% # this is a filter
-		gather(d_hab,d_real,key='Strategy',value='delta') %>% 
+		rename(habit=d_hab,realtime=d_real) %>% 
+		gather(habit,realtime,key='Strategy',value='delta') %>% 
 		filter( delta >= 0 ) %>% # ie is not null
 		group_by(pair,Strategy) %>%
 		mutate( rank = row_number(delta) / max(row_number(delta))) %>%
-		ggplot(data=.,aes(group=pair,alpha=weight)) +
-			geom_line( mapping=aes( rank, delta ), color='blue' ) +
-			scale_alpha(range=c(.05,.6)) +
+		ggplot(data=.,aes(group=pair)) + 
 			geom_vline(aes(xintercept=.9),color='red') + 
+			geom_line( mapping=aes( rank, delta ), color='black',alpha=0.15 ) + 
+			scale_alpha(range=c(.05,.6)) + 
 			coord_trans(limy=c(0,25)) + 
-			theme_minimal() +
-			facet_wrap(~Strategy) +
-			labs(x='Cumulative Probability',y='Habit Delta T (minutes)')
+			theme_minimal() + 
+			facet_wrap(~Strategy) + 
+			labs(x='Cumulative Probability',y='Travel Time Difference (minutes)')
 dev.off()
 
 # find 90th percentile time delta per (od,period) for real and habit
@@ -78,34 +91,45 @@ ods2 = times %>%
 	inner_join(ods)
 
 # density plot of 90th percentile delta-T
-cairo_pdf('~/Dropbox/diss/routing/paper/figures/delta-T-KDE.pdf',width=5,height=2)
+cairo_pdf('~/Dropbox/diss/routing/paper/figures/delta-T-KDE.pdf',width=6,height=3)
 	ods2 %>% 
-		gather(dm_hab90,dm_real90,key='strategy',value='d_90') %>%
+		rename( habit=dm_hab90, realtime=dm_real90 ) %>% 
+		gather(habit,realtime,key='Strategy',value='d_90') %>%
+		group_by(Strategy,period) %>% 
+		mutate(weight = weight/sum(weight)) %>%
 		ggplot(data=.) + 
-			geom_density(aes(d_90,weight=weight,fill=strategy),alpha=.3,color=NA) + 
+			geom_density(aes(d_90,weight=weight,fill=Strategy),alpha=.3,color=NA) + 
 			coord_trans(limx=c(0,35)) + theme_light() + 
-			labs(x='90th percentile travel time risk')
+			labs(x='90th Percentile Travel Time Risk',y='Density') + 
+			facet_wrap(~period) + 
+			theme_minimal()
 dev.off()
 	
 #what predicts momentary time deltas?
-full_model = lm( dm_hab90 ~ grid + retro_ent + retro_it_n + from_grid + period, data=ods2, weights=weight)
+full_model = lm( dm_hab90 ~ grid_dist + entropy + it_n + from_grid + period, data=ods2, weights=weight)
 summary(full_model)
 
-terse_model = lm( dm_hab90 ~ retro_ent, data=ods2, weights=weight)
+terse_model = lm( dm_real90 ~ entropy, data=ods2, weights=weight)
 summary(terse_model)
 
 # density plot of global travel time distributions
-library('spatstat')
+#library('spatstat')
 cairo_pdf('~/Dropbox/diss/routing/paper/figures/global-tt-dists.pdf',width=5,height=2)
 	times %>%
+		# filter for observations with non-null values
 		filter(any,real,hab) %>%
-		gather(any,real,hab,key='strategy',value='tt') %>%
+		select(any,real,hab,weight,period) %>%
+		rename(Optimal=any,Habit=hab,Realtime=real) %>%
+		gather(Optimal,Realtime,Habit,key='Strategy',value='tt') %>%
+		group_by(Strategy,period) %>%
+		mutate(weight = weight/sum(weight)) %>%
 		#group_by(strategy) %>%
 		#summarise( weighted.quantile(tt,w=weight,probs=.9) )
 			ggplot(data=.) + 
-			geom_density(aes(tt,weight=weight,fill=strategy,color=strategy),alpha=.3) + 
+			geom_density(aes(tt,weight=weight,fill=Strategy,color=Strategy),alpha=.3,bw=1) + 
 			coord_trans(limx=c(0,120)) + 
-			theme_light() + 
+			theme_minimal() + 
+			facet_wrap(~period) +
 			labs(x='Global travel time distributions (minutes)')
 dev.off()
 
