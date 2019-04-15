@@ -8,10 +8,10 @@ OD_file		= 'data/ODs.csv'
 OTP_server	= 'http://166.48.61.19:8080/otp/routers/ttc-17480/plan'
 
 # define the start time
-start_time = datetime( year=2017, month=11, day=10 )
+start_time = datetime( year=2017, month=11, day=10, hour=6 )
 print('from ',start_time)
 # and go for how long?
-end_time = start_time + timedelta(hours=24)
+end_time = start_time + timedelta(hours=16,minutes=30)
 print('until',end_time)
 
 # how many processors to use?
@@ -37,7 +37,7 @@ if all_pairs:
 			if not os.path.exists(output_dir+str(oid)+'/'+str(did)+'.csv'):
 				OD_pairs.append( (oid,did) )
 else:
-	with open('data/sampled-ODs/10k.csv') as csvfile:
+	with open('data/sampled-ODs/1k-weighted-sample.csv') as csvfile:
 		reader = csv.DictReader(csvfile, delimiter=',')
 		for r in reader:
 			# skip if the results already exist
