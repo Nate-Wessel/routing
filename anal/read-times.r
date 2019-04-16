@@ -3,7 +3,7 @@
 ###############################################
 # check that we have the OD level data
 if( ! exists('ods') | ! exists('periods') ){ 
-	source('~/routing/anal/read-and-weight-ods.r')
+	source('~/routing/anal/read-ods.r')
 }
 # remove this and reread
 if( exists('times') ){ remove(times) }
@@ -35,7 +35,7 @@ times = times %>%
 		d_real = real - any # realtime time delta
 	) %>%
 	select(pair,period,everything(),-o,-d) %>%
-	left_join( distinct(ods[,c('pair','weight','grid_dist')]) )
+	left_join( distinct(ods[,c('pair','grid_dist')]) )
 
 gc()
 
