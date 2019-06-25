@@ -7,8 +7,8 @@ import config
 from OD import OD
 
 # open files for writing output
-with open('data/untracked/od-stats.csv','w+') as f1, \
-	open('data/untracked/times.csv','w+') as f2:
+with open('data/untracked/evening-od-stats.csv','w+') as f1, \
+	open('data/untracked/evening-times.csv','w+') as f2:
 	# OD level outputs
 	fieldnames = [ 'i','o','d','entropy','it_n' ]
 	od_writer = csv.DictWriter(f1,fieldnames=fieldnames)
@@ -20,7 +20,7 @@ with open('data/untracked/od-stats.csv','w+') as f1, \
 
 	# read input from a file
 	line_num = 0
-	with open('data/sampled-ODs/1k.csv') as f3:
+	with open('data/sampled-ODs/1k-weighted-sample.csv') as f3:
 		reader = csv.DictReader(f3)
 		for r in reader:
 			line_num += 1 

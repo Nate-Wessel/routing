@@ -3,12 +3,12 @@ from datetime import datetime, timedelta
 from random import shuffle
 
 # where are the things?
-output_dir	= '/home/nate/dissdata/routing/17480/'
+output_dir	= '/home/nate/dissdata/routing/17476/'
 OD_file		= 'data/ODs.csv'
-OTP_server	= 'http://166.48.61.19:8080/otp/routers/ttc-17480/plan'
+OTP_server	= 'http://166.48.61.19:8080/otp/routers/ttc-17476/plan'
 
 # define the start time
-start_time = datetime( year=2017, month=11, day=10, hour=6 )
+start_time = datetime( year=2017, month=11, day=6, hour=6 )
 print('from ',start_time)
 # and go for how long?
 end_time = start_time + timedelta(hours=16,minutes=30)
@@ -37,7 +37,7 @@ if all_pairs:
 			if not os.path.exists(output_dir+str(oid)+'/'+str(did)+'.csv'):
 				OD_pairs.append( (oid,did) )
 else:
-	with open('data/sampled-ODs/1k-weighted-sample.csv') as csvfile:
+	with open('data/sampled-ODs/5k-weighted-sample.csv') as csvfile:
 		reader = csv.DictReader(csvfile, delimiter=',')
 		for r in reader:
 			# skip if the results already exist
